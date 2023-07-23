@@ -1,0 +1,3 @@
+services:
+    digitalmarketingframework.core.registry:
+        class: DigitalMarketingFramework\Drupal\Core\Registry\Registry
