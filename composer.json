@@ -1,0 +1,34 @@
+{
+    "name": "digital-marketing-framework/drupal-core",
+    "type": "drupal-module",
+    "description": "Digital Marketing Framework - Core",
+    "license": "GPL-2.0-or-later",
+    "keywords": [
+        "Drupal",
+        "module",
+        "marketing",
+        "framework",
+        "data",
+        "relay",
+        "distribution",
+        "distributor",
+        "collector"
+    ],
+    "homepage": "https://www.mediatis.de",
+    "authors": [
+        {
+            "email": "info@mediatis.de",
+            "homepage": "https://www.mediatis.de",
+            "name": "Mediatis AG",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "drupal/core": "^9.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "DigitalMarketingFramework\\Drupal\\Core\\": "src"
+        }
+    }
+}
