@@ -1,0 +1,20 @@
+# Backend routes for Anyrel
+
+dmf_core.backend:
+  path: '/admin/dmf'
+  defaults:
+    _controller: '\Drupal\dmf_core\Controller\BackendController::handleRequest'
+    _title: 'Anyrel'
+  requirements:
+    _permission: 'administer dmf'
+  options:
+    _admin_route: TRUE
+
+dmf_core.backend.ajax:
+  path: '/admin/dmf/ajax'
+  defaults:
+    _controller: '\Drupal\dmf_core\Controller\BackendController::handleAjaxRequest'
+  requirements:
+    _permission: 'administer dmf'
+  options:
+    _admin_route: TRUE

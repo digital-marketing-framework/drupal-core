@@ -1,0 +1,74 @@
+services:
+  _defaults:
+    autowire: false
+    autoconfigure: false
+    public: false
+
+  # Request Context
+  dmf_core.context:
+    class: Drupal\dmf_core\Context\DrupalRequestContext
+    arguments:
+      - '@request_stack'
+
+  # Registry
+  dmf_core.registry:
+    class: Drupal\dmf_core\Registry\Registry
+    arguments:
+      - '@event_dispatcher'
+
+  # Registry Collection
+  dmf_core.registry_collection:
+    class: Drupal\dmf_core\Registry\RegistryCollection
+    arguments:
+      - '@event_dispatcher'
+      - '@dmf_core.context'
+    public: true
+
+  # Logger Factory
+  dmf_core.logger_factory:
+    class: Drupal\dmf_core\Log\LoggerFactory
+    arguments:
+      - '@logger.factory'
+
+  # Backend URI Builder
+  dmf_core.backend.uri_builder:
+    class: Drupal\dmf_core\Backend\UriBuilder
+
+  # Module Resource Service
+  dmf_core.resource.module:
+    class: Drupal\dmf_core\Resource\ModuleResourceService
+    arguments:
+      - '@extension.list.module'
+
+  # File Storage
+  dmf_core.file_storage:
+    class: Drupal\dmf_core\FileStorage\FileStorage
+    arguments:
+      - '@file_system'
+      - '@file_url_generator'
+      - '@file.mime_type.guesser'
+
+  # Backend Controller
+  dmf_core.controller.backend:
+    class: Drupal\dmf_core\Controller\BackendController
+    arguments:
+      - '@dmf_core.registry_collection'
+
+  # Event Subscribers
+  dmf_core.event_subscriber.registry_collection:
+    class: Drupal\dmf_core\Registry\EventSubscriber\RegistryCollectionEventSubscriber
+    arguments:
+      - '@dmf_core.registry'
+    tags:
+      - { name: event_subscriber }
+
+  dmf_core.event_subscriber.core_registry_update:
+    class: Drupal\dmf_core\Registry\EventSubscriber\CoreRegistryUpdateEventSubscriber
+    arguments:
+      - '@config.factory'
+      - '@dmf_core.logger_factory'
+      - '@dmf_core.backend.uri_builder'
+      - '@dmf_core.resource.module'
+      - '@dmf_core.file_storage'
+    tags:
+      - { name: event_subscriber }

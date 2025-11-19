@@ -1,0 +1,57 @@
+# Global configuration schema for dmf_core module
+# This defines the structure of dmf_core.global_settings config object
+# Based on DigitalMarketingFramework\Core\GlobalConfiguration\Schema\CoreGlobalConfigurationSchema
+
+dmf_core.global_settings:
+  type: config_object
+  label: 'Anyrel Core - Global Settings'
+  mapping:
+    debug:
+      type: boolean
+      label: 'Debug'
+    environment:
+      type: string
+      label: 'Default Host'
+    configurationStorage:
+      type: mapping
+      label: 'Configuration Storage'
+      mapping:
+        folder:
+          type: string
+          label: 'Folder'
+        defaultConfigurationDocument:
+          type: string
+          label: 'Default Configuration Document'
+        documentAliases:
+          type: string
+          label: 'Document Aliases'
+        additionalDocumentFolders:
+          type: string
+          label: 'Additional document folders (comma-separated)'
+        allowSaveToExtensionPaths:
+          type: boolean
+          label: 'Allow save to extension paths'
+    api:
+      type: mapping
+      label: 'API'
+      mapping:
+        enabled:
+          type: boolean
+          label: 'Enabled'
+        basePath:
+          type: string
+          label: 'Base Path'
+    dataPrivacy:
+      type: mapping
+      label: 'Data Privacy'
+      mapping:
+        enableUnregulated:
+          type: boolean
+          label: 'Enable unregulated Data Privacy Plugin'
+    notifications:
+      type: mapping
+      label: 'Notifications'
+      mapping:
+        enabled:
+          type: boolean
+          label: 'Enable notifications'

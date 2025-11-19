@@ -1,0 +1,24 @@
+# Default global settings for Anyrel Core
+# These values are installed when the module is enabled
+# Runtime values are stored in the database and can be modified via the configuration editor
+
+debug: false
+
+environment: ''
+
+configurationStorage:
+  folder: 'private://anyrel/configuration/'
+  defaultConfigurationDocument: ''
+  documentAliases: ''
+  additionalDocumentFolders: ''
+  allowSaveToExtensionPaths: false
+
+api:
+  enabled: false
+  basePath: 'digital-marketing-framework/api'
+
+dataPrivacy:
+  enableUnregulated: false
+
+notifications:
+  enabled: false

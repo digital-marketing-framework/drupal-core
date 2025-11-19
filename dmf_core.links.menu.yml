@@ -1,0 +1,8 @@
+# Menu links for Anyrel
+
+dmf_core.admin:
+  title: 'Anyrel'
+  description: 'Configure and manage Anyrel'
+  route_name: dmf_core.backend
+  parent: system.admin_config
+  weight: 10

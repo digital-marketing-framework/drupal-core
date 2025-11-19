@@ -1,0 +1,6 @@
+name: 'Anyrel Core'
+type: module
+description: 'Core integration for Anyrel'
+core_version_requirement: ^10 || ^11
+package: 'Anyrel'
+dependencies: []

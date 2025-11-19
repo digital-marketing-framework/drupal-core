@@ -1,0 +1,6 @@
+# Permissions for Anyrel
+
+administer dmf:
+  title: 'Administer Anyrel'
+  description: 'Configure and manage Anyrel settings, routes, and integrations. This includes access to the backend administration interface, configuration documents, and global settings.'
+  restrict access: TRUE
