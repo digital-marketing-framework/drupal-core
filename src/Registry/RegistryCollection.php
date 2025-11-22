@@ -4,6 +4,7 @@ namespace Drupal\dmf_core\Registry;
 
 use DigitalMarketingFramework\Core\Registry\RegistryCollection as OriginalRegistryCollection;
 use Drupal\dmf_core\Context\DrupalRequestContext;
+use Drupal\dmf_core\Registry\Event\RegistryCollectionEvent;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class RegistryCollection extends OriginalRegistryCollection
@@ -18,6 +19,7 @@ class RegistryCollection extends OriginalRegistryCollection
 
     protected function fetchRegistries(): void
     {
-        $this->eventDispatcher->dispatch($this);
+        $event = new RegistryCollectionEvent($this);
+        $this->eventDispatcher->dispatch($event);
     }
 }

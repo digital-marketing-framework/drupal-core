@@ -5,12 +5,14 @@ namespace Drupal\dmf_core\Controller;
 use DigitalMarketingFramework\Core\Backend\Request;
 use DigitalMarketingFramework\Core\Backend\Response\JsonResponse;
 use DigitalMarketingFramework\Core\Backend\Response\RedirectResponse;
+use DigitalMarketingFramework\Core\Backend\Response\Response;
+use Drupal\Core\Render\Markup;
 use Drupal\dmf_core\Registry\RegistryCollection;
 use JsonException;
 use Symfony\Component\HttpFoundation\JsonResponse as SymfonyJsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirectResponse;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
-use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 /**
  * Backend controller for Anyrel.
@@ -69,9 +71,11 @@ class BackendController
     }
 
     /**
-     * Handle backend page requests.
+     * Get Anyrel response for a request.
+     *
+     * @return Response
      */
-    public function handleRequest(SymfonyRequest $request): Response
+    protected function getAnyrelResponse(SymfonyRequest $request): Response
     {
         $params = $request->query->all('dmf') ?? [];
         $route = $params['route'] ?? '';
@@ -80,7 +84,19 @@ class BackendController
         $method = $request->getMethod();
 
         $req = new Request($route, $arguments, $body, $method);
-        $result = $this->registryCollection->getRegistry()->getBackendManager()->getResponse($req);
+        return $this->registryCollection->getRegistry()->getBackendManager()->getResponse($req);
+    }
+
+    /**
+     * Handle backend page requests.
+     *
+     * @return array<string,mixed>|SymfonyResponse
+     *   Render array for HTML responses (integrates with Drupal admin theme),
+     *   or Symfony Response object for redirects/JSON responses.
+     */
+    public function handleRequest(SymfonyRequest $request): array|SymfonyResponse
+    {
+        $result = $this->getAnyrelResponse($request);
 
         if ($result instanceof RedirectResponse) {
             return new SymfonyRedirectResponse($result->getRedirectLocation());
@@ -88,15 +104,106 @@ class BackendController
             return new SymfonyJsonResponse($result->getData());
         }
 
-        return new Response($result->getContent());
+        // For HTML responses, return a render array to integrate with Drupal's admin theme
+        $html = $result->getContent();
+
+        // Extract and attach JavaScript and CSS files
+        $attachments = $this->extractAssets($html);
+
+        return [
+            '#markup' => Markup::create($html),
+            '#attached' => $attachments,
+        ];
+    }
+
+    /**
+     * Extract JavaScript and CSS assets from HTML content.
+     *
+     * @param string $html
+     *   The rendered HTML content.
+     *
+     * @return array<string,mixed>
+     *   Drupal #attached array with 'js' and 'css' keys.
+     */
+    protected function extractAssets(string &$html): array
+    {
+        $attachments = [
+            'html_head' => [],
+        ];
+
+        // Extract <link> tags for CSS
+        if (preg_match_all('/<link[^>]+rel=["\']stylesheet["\'][^>]*>/i', $html, $cssMatches)) {
+            foreach ($cssMatches[0] as $linkTag) {
+                if (preg_match('/href=["\']([^"\']+)["\']/i', $linkTag, $hrefMatch)) {
+                    $cssUrl = $hrefMatch[1];
+                    $attachments['html_head'][] = [
+                        [
+                            '#tag' => 'link',
+                            '#attributes' => [
+                                'rel' => 'stylesheet',
+                                'href' => $cssUrl,
+                                'media' => 'all',
+                            ],
+                        ],
+                        'dmf_backend_css_' . md5($cssUrl),
+                    ];
+                    // Remove the link tag from HTML
+                    $html = str_replace($linkTag, '', $html);
+                }
+            }
+        }
+
+        // Extract <script> tags
+        if (preg_match_all('/<script[^>]+src=["\']([^"\']+)["\'][^>]*><\/script>/i', $html, $scriptMatches, PREG_SET_ORDER)) {
+            foreach ($scriptMatches as $match) {
+                $scriptTag = $match[0];
+                $scriptUrl = $match[1];
+
+                $attributes = ['src' => $scriptUrl];
+
+                // Check for type="module"
+                if (preg_match('/type=["\']module["\']/i', $scriptTag)) {
+                    $attributes['type'] = 'module';
+                }
+
+                // Check for defer
+                if (preg_match('/defer(?:=["\']defer["\'])?/i', $scriptTag)) {
+                    $attributes['defer'] = 'defer';
+                }
+
+                $attachments['html_head'][] = [
+                    [
+                        '#tag' => 'script',
+                        '#attributes' => $attributes,
+                    ],
+                    'dmf_backend_js_' . md5($scriptUrl),
+                ];
+
+                // Remove the script tag from HTML
+                $html = str_replace($scriptTag, '', $html);
+            }
+        }
+
+        return $attachments;
     }
 
     /**
      * Handle backend AJAX requests.
+     *
+     * AJAX requests always return Symfony Response objects (JSON or Redirect),
+     * never render arrays.
      */
-    public function handleAjaxRequest(SymfonyRequest $request): Response
+    public function handleAjaxRequest(SymfonyRequest $request): SymfonyResponse
     {
-        // AJAX requests use the same handler
-        return $this->handleRequest($request);
+        $result = $this->getAnyrelResponse($request);
+
+        if ($result instanceof RedirectResponse) {
+            return new SymfonyRedirectResponse($result->getRedirectLocation());
+        } elseif ($result instanceof JsonResponse) {
+            return new SymfonyJsonResponse($result->getData());
+        }
+
+        // AJAX requests should not return HTML, but if they do, wrap in Symfony Response
+        return new SymfonyResponse($result->getContent());
     }
 }

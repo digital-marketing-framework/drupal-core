@@ -14,12 +14,27 @@ abstract class AbstractCoreRegistryUpdateEventSubscriber implements EventSubscri
     /**
      * @var string
      */
-    protected const TEMPLATE_PATH_PATTERN = 'modules/contrib/%s/templates/frontend';
+    protected const LAYOUTS_PATH_PATTERN = 'MOD:%s/res/layouts/frontend';
 
     /**
      * @var string
      */
-    protected const BACKEND_TEMPLATE_PATH_PATTERN = 'modules/contrib/%s/templates/backend';
+    protected const BACKEND_LAYOUTS_PATH_PATTERN = 'MOD:%s/res/layouts/backend';
+
+    /**
+     * @var int
+     */
+    protected const LAYOUTS_PRIORITY = 200;
+
+    /**
+     * @var string
+     */
+    protected const TEMPLATE_PATH_PATTERN = 'MOD:%s/res/templates/frontend';
+
+    /**
+     * @var string
+     */
+    protected const BACKEND_TEMPLATE_PATH_PATTERN = 'MOD:%s/res/templates/backend';
 
     /**
      * @var int
@@ -29,12 +44,12 @@ abstract class AbstractCoreRegistryUpdateEventSubscriber implements EventSubscri
     /**
      * @var string
      */
-    protected const PARTIAL_PATH_PATTERN = 'modules/contrib/%s/partials/frontend';
+    protected const PARTIAL_PATH_PATTERN = 'MOD:%s/res/partials/frontend';
 
     /**
      * @var string
      */
-    protected const BACKEND_PARTIAL_PATH_PATTERN = 'modules/contrib/%s/partials/backend';
+    protected const BACKEND_PARTIAL_PATH_PATTERN = 'MOD:%s/res/partials/backend';
 
     /**
      * @var int
@@ -44,7 +59,7 @@ abstract class AbstractCoreRegistryUpdateEventSubscriber implements EventSubscri
     /**
      * @var string
      */
-    protected const CONFIGURATION_DOCUMENTS_PATH_PATTERN = 'modules/contrib/%s/config/documents';
+    protected const CONFIGURATION_DOCUMENTS_PATH_PATTERN = 'MOD:%s/res/configuration';
 
     public function __construct(
         protected InitializationInterface $initialization,
@@ -69,9 +84,11 @@ abstract class AbstractCoreRegistryUpdateEventSubscriber implements EventSubscri
 
         $moduleAlias = $this->initialization->getPackageAlias();
         if ($moduleAlias !== '') {
+            $registry->getTemplateService()->addPartialFolder(sprintf(static::LAYOUTS_PATH_PATTERN, $moduleAlias), static::LAYOUTS_PRIORITY);
             $registry->getTemplateService()->addTemplateFolder(sprintf(static::TEMPLATE_PATH_PATTERN, $moduleAlias), static::TEMPLATE_PRIORITY);
             $registry->getTemplateService()->addPartialFolder(sprintf(static::PARTIAL_PATH_PATTERN, $moduleAlias), static::PARTIAL_PRIORITY);
 
+            $registry->getBackendTemplateService()->addPartialFolder(sprintf(static::BACKEND_LAYOUTS_PATH_PATTERN, $moduleAlias), static::LAYOUTS_PRIORITY);
             $registry->getBackendTemplateService()->addTemplateFolder(sprintf(static::BACKEND_TEMPLATE_PATH_PATTERN, $moduleAlias), static::TEMPLATE_PRIORITY);
             $registry->getBackendTemplateService()->addPartialFolder(sprintf(static::BACKEND_PARTIAL_PATH_PATTERN, $moduleAlias), static::PARTIAL_PRIORITY);
 

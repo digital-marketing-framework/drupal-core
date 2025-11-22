@@ -48,11 +48,18 @@ services:
       - '@file_url_generator'
       - '@file.mime_type.guesser'
 
+  # API Endpoint Repository
+  dmf_core.api_endpoint_repository:
+    class: Drupal\dmf_core\Entity\ApiEndpointRepository
+    arguments:
+      - '@entity_type.manager'
+
   # Backend Controller
   dmf_core.controller.backend:
     class: Drupal\dmf_core\Controller\BackendController
     arguments:
       - '@dmf_core.registry_collection'
+    public: true
 
   # Event Subscribers
   dmf_core.event_subscriber.registry_collection:
@@ -61,6 +68,7 @@ services:
       - '@dmf_core.registry'
     tags:
       - { name: event_subscriber }
+    public: true
 
   dmf_core.event_subscriber.core_registry_update:
     class: Drupal\dmf_core\Registry\EventSubscriber\CoreRegistryUpdateEventSubscriber
@@ -70,5 +78,9 @@ services:
       - '@dmf_core.backend.uri_builder'
       - '@dmf_core.resource.module'
       - '@dmf_core.file_storage'
+      - '@dmf_core.api_endpoint_repository'
+      - '@entity.form_builder'
+      - '@renderer'
     tags:
       - { name: event_subscriber }
+    public: true

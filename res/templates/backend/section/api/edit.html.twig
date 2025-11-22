@@ -1,0 +1,9 @@
+{# API Endpoint Edit Template - Drupal #}
+{% extends "module.html.twig" %}
+
+{% block section %}
+    <div class="dmf-api-endpoint-edit">
+        {# Output the Drupal form HTML (rendered by ApiEndpointForm) #}
+        {{ formHtml|raw }}
+    </div>
+{% endblock %}

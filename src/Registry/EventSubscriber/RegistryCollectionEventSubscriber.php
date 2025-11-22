@@ -2,10 +2,9 @@
 
 namespace Drupal\dmf_core\Registry\EventSubscriber;
 
-use DigitalMarketingFramework\Core\Registry\RegistryCollectionInterface;
 use DigitalMarketingFramework\Core\Registry\RegistryDomain;
+use Drupal\dmf_core\Registry\Event\RegistryCollectionEvent;
 use Drupal\dmf_core\Registry\Registry;
-use Drupal\dmf_core\Registry\RegistryCollection;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class RegistryCollectionEventSubscriber implements EventSubscriberInterface
@@ -18,12 +17,12 @@ class RegistryCollectionEventSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            RegistryCollection::class => 'onRegistryCollectionUpdate',
+            RegistryCollectionEvent::class => 'onRegistryCollectionUpdate',
         ];
     }
 
-    public function onRegistryCollectionUpdate(RegistryCollectionInterface $collection): void
+    public function onRegistryCollectionUpdate(RegistryCollectionEvent $event): void
     {
-        $collection->addRegistry(RegistryDomain::CORE, $this->registry);
+        $event->getRegistryCollection()->addRegistry(RegistryDomain::CORE, $this->registry);
     }
 }

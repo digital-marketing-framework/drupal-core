@@ -1,0 +1,39 @@
+{#
+  Drupal-specific backend layout for Anyrel.
+
+  This template overrides the core module.html.twig layout to render only
+  the content portion without <html>, <head>, and <body> tags. This allows
+  the content to be embedded within Drupal's admin theme.
+
+  Scripts and styles are rendered into the HTML so the BackendController
+  can extract them and attach them via Drupal's #attached render array.
+#}
+{% block styles %}
+    {% for style in styles %}
+        <link rel="stylesheet" href="{{ asset(style) }}" media="all">
+    {% endfor %}
+{% endblock %}
+
+{% block content %}
+    <div class="module">
+        {% block header %}
+            {{ include('section/header.html.twig', {menu}) }}
+        {% endblock %}
+
+        <div class="module-body" style="position: relative; height: auto; min-height: calc(100vh / 2);">
+            <div class="container">
+                {% block headline %}
+                    <h1>{{ section.title }}</h1>
+                {% endblock %}
+
+                {% block section %}{% endblock %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {% for script in scripts %}
+        <script src="{{ asset(script) }}" type="module" defer="defer"></script>
+    {% endfor %}
+{% endblock %}

@@ -55,3 +55,36 @@ dmf_core.global_settings:
         enabled:
           type: boolean
           label: 'Enable notifications'
+
+# API Endpoint entity schema
+dmf_core.dmf_api_endpoint.*:
+  type: config_entity
+  label: 'API Endpoint'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    name:
+      type: string
+      label: 'Name'
+    enabled:
+      type: boolean
+      label: 'Enabled'
+    push_enabled:
+      type: boolean
+      label: 'Push enabled'
+    pull_enabled:
+      type: boolean
+      label: 'Pull enabled'
+    disable_context:
+      type: boolean
+      label: 'Disable context'
+    allow_context_override:
+      type: boolean
+      label: 'Allow context override'
+    expose_to_frontend:
+      type: boolean
+      label: 'Expose to frontend'
+    configuration_document:
+      type: text
+      label: 'Configuration document'

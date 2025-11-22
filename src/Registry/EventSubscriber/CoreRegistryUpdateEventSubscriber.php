@@ -2,6 +2,7 @@
 
 namespace Drupal\dmf_core\Registry\EventSubscriber;
 
+use DigitalMarketingFramework\Core\Api\EndPoint\EndPointStorageInterface;
 use DigitalMarketingFramework\Core\Backend\UriBuilderInterface;
 use DigitalMarketingFramework\Core\ConfigurationDocument\Parser\YamlConfigurationDocumentParser;
 use DigitalMarketingFramework\Core\ConfigurationDocument\Storage\YamlFileConfigurationDocumentStorage;
@@ -11,7 +12,11 @@ use DigitalMarketingFramework\Core\Log\LoggerFactoryInterface;
 use DigitalMarketingFramework\Core\Registry\RegistryInterface;
 use DigitalMarketingFramework\Core\Resource\ResourceServiceInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Entity\EntityFormBuilderInterface;
+use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Site\Settings;
+use Drupal\dmf_core\Backend\AssetUriBuilder;
+use Drupal\dmf_core\Backend\Controller\SectionController\ApiEditSectionController;
 use Drupal\dmf_core\GlobalConfiguration\GlobalConfiguration;
 use Drupal\dmf_core\GlobalConfiguration\Schema\CoreGlobalConfigurationSchema;
 
@@ -23,6 +28,9 @@ class CoreRegistryUpdateEventSubscriber extends AbstractCoreRegistryUpdateEventS
         protected UriBuilderInterface $uriBuilder,
         protected ResourceServiceInterface $moduleResourceService,
         protected FileStorageInterface $fileStorage,
+        protected EndPointStorageInterface $endPointStorage,
+        protected EntityFormBuilderInterface $entityFormBuilder,
+        protected RendererInterface $renderer,
     ) {
         $initialization = new CoreInitialization('dmf_core');
         $initialization->setGlobalConfigurationSchema(new CoreGlobalConfigurationSchema());
@@ -48,6 +56,9 @@ class CoreRegistryUpdateEventSubscriber extends AbstractCoreRegistryUpdateEventS
         // Set FileStorage (Drupal implementation)
         $registry->setFileStorage($this->fileStorage);
 
+        // Set API Endpoint storage (Drupal implementation)
+        $registry->setEndPointStorage($this->endPointStorage);
+
         // Set ConfigurationDocumentStorage (user-created documents)
         $registry->setConfigurationDocumentStorage(
             $registry->createObject(YamlFileConfigurationDocumentStorage::class)
@@ -56,11 +67,6 @@ class CoreRegistryUpdateEventSubscriber extends AbstractCoreRegistryUpdateEventS
         // Set ConfigurationDocumentParser
         $registry->setConfigurationDocumentParser(
             $registry->createObject(YamlConfigurationDocumentParser::class)
-        );
-
-        // Set StaticConfigurationDocumentStorage (package-bundled documents)
-        $registry->setStaticConfigurationDocumentStorage(
-            $registry->createObject(YamlFileConfigurationDocumentStorage::class)
         );
 
         // Set vendor path for vendor resource service
@@ -87,12 +93,23 @@ class CoreRegistryUpdateEventSubscriber extends AbstractCoreRegistryUpdateEventS
             'salt' => Settings::get('hash_salt', ''),
         ]);
 
+        // Set backend asset URI builder
+        $registry->setBackendAssetUriBuilder(new AssetUriBuilder($registry));
+
         parent::initServices($registry);
     }
 
     protected function initPlugins(RegistryInterface $registry): void
     {
         parent::initPlugins($registry);
-        // TODO: Register Drupal-specific backend section controllers
+
+        // Register Drupal-specific backend section controllers with Drupal services
+        $registry->registerBackendSectionController(
+            ApiEditSectionController::class,
+            [
+                $this->entityFormBuilder,
+                $this->renderer,
+            ]
+        );
     }
 }

@@ -12,9 +12,11 @@ class UriBuilder implements UriBuilderInterface
         $parameters = [
             'dmf' => [
                 'route' => $route,
-                'arguments' => $arguments,
             ],
         ];
+        if ($arguments !== []) {
+            $parameters['dmf']['arguments'] = $arguments;
+        }
 
         // Routes starting with "page.*" use the main backend route
         // Routes starting with "ajax.*" use the AJAX route

@@ -3,7 +3,7 @@
 dmf_core.backend:
   path: '/admin/dmf'
   defaults:
-    _controller: '\Drupal\dmf_core\Controller\BackendController::handleRequest'
+    _controller: 'dmf_core.controller.backend:handleRequest'
     _title: 'Anyrel'
   requirements:
     _permission: 'administer dmf'
@@ -13,7 +13,7 @@ dmf_core.backend:
 dmf_core.backend.ajax:
   path: '/admin/dmf/ajax'
   defaults:
-    _controller: '\Drupal\dmf_core\Controller\BackendController::handleAjaxRequest'
+    _controller: 'dmf_core.controller.backend:handleAjaxRequest'
   requirements:
     _permission: 'administer dmf'
   options:
