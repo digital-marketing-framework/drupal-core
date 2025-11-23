@@ -61,6 +61,13 @@ services:
       - '@dmf_core.registry_collection'
     public: true
 
+  # Route Subscribers
+  dmf_core.route_subscriber.api:
+    class: Drupal\dmf_core\Routing\ApiRouteSubscriber
+    tags:
+      - { name: event_subscriber }
+    public: true
+
   # Event Subscribers
   dmf_core.event_subscriber.registry_collection:
     class: Drupal\dmf_core\Registry\EventSubscriber\RegistryCollectionEventSubscriber
