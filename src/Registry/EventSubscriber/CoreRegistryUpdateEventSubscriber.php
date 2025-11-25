@@ -13,6 +13,7 @@ use DigitalMarketingFramework\Core\Registry\RegistryInterface;
 use DigitalMarketingFramework\Core\Resource\ResourceServiceInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityFormBuilderInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Site\Settings;
 use Drupal\dmf_core\Backend\AssetUriBuilder;
@@ -30,6 +31,7 @@ class CoreRegistryUpdateEventSubscriber extends AbstractCoreRegistryUpdateEventS
         protected FileStorageInterface $fileStorage,
         protected EndPointStorageInterface $endPointStorage,
         protected EntityFormBuilderInterface $entityFormBuilder,
+        protected EntityTypeManagerInterface $entityTypeManager,
         protected RendererInterface $renderer,
     ) {
         $initialization = new CoreInitialization('dmf_core');
@@ -108,6 +110,7 @@ class CoreRegistryUpdateEventSubscriber extends AbstractCoreRegistryUpdateEventS
             ApiEditSectionController::class,
             [
                 $this->entityFormBuilder,
+                $this->entityTypeManager,
                 $this->renderer,
             ]
         );

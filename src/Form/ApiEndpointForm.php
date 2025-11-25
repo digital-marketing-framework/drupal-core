@@ -100,9 +100,9 @@ class ApiEndpointForm extends EntityForm
             ready: true,
             mode: 'modal',
             readonly: false,
-            globalDocument: true,
+            globalDocument: false,  // API endpoints use embedded documents, not global
             documentType: MetaData::DEFAULT_DOCUMENT_TYPE,
-            includes: false,  // API endpoints don't support includes
+            includes: true,  // API endpoints support document inheritance
             parameters: [],
             contextIdentifier: $contextIdentifier,
             uid: $uid

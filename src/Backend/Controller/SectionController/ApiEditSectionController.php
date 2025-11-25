@@ -2,97 +2,67 @@
 
 namespace Drupal\dmf_core\Backend\Controller\SectionController;
 
-use DigitalMarketingFramework\Core\Api\EndPoint\EndPointStorageInterface;
-use DigitalMarketingFramework\Core\Backend\Controller\SectionController\ApiSectionController;
-use DigitalMarketingFramework\Core\Backend\Response\Response;
-use DigitalMarketingFramework\Core\Exception\DigitalMarketingFrameworkException;
 use DigitalMarketingFramework\Core\Registry\RegistryInterface;
 use Drupal\Core\Entity\EntityFormBuilderInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Render\RendererInterface;
 
 /**
  * API Endpoint edit controller for Drupal.
  *
- * Extends core ApiSectionController to add Drupal-specific edit/save actions.
+ * Handles the 'edit' action for API endpoints using Drupal's EntityForm.
  */
-class ApiEditSectionController extends ApiSectionController
+class ApiEditSectionController extends EditSectionController
 {
-    public const WEIGHT = 0;
-
-    /**
-     * API endpoint storage repository.
-     */
-    protected EndPointStorageInterface $endPointStorage;
-
     /**
      * Constructor.
      */
     public function __construct(
         string $keyword,
         RegistryInterface $registry,
-        protected EntityFormBuilderInterface $entityFormBuilder,
-        protected RendererInterface $renderer
+        EntityFormBuilderInterface $entityFormBuilder,
+        EntityTypeManagerInterface $entityTypeManager,
+        RendererInterface $renderer,
     ) {
-        parent::__construct($keyword, $registry);
-        $this->endPointStorage = $registry->getEndPointStorage();
+        parent::__construct(
+            $keyword,
+            $registry,
+            'api',
+            $entityFormBuilder,
+            $entityTypeManager,
+            $renderer
+        );
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function editAction(): Response
+    protected function getEntityTypeId(): string
     {
-        $params = $this->getParameters();
-        $id = $params['id'] ?? '';
+        return 'dmf_api_endpoint';
+    }
 
-        // Load the entity via repository (CMS-agnostic)
-        $entity = $this->endPointStorage->fetchById($id);
+    /**
+     * {@inheritdoc}
+     */
+    protected function getListRoute(): string
+    {
+        return 'page.api.list';
+    }
 
-        if (!$entity) {
-            // Entity not found
-            throw new DigitalMarketingFrameworkException(sprintf('API endpoint "%s" not found', $id));
-        }
+    /**
+     * {@inheritdoc}
+     */
+    protected function getEditRoute(): string
+    {
+        return 'page.api.edit';
+    }
 
-        // Get returnUrl from parameters or default to list
-        $returnUrl = $params['returnUrl'] ?? $this->registry->getBackendUriBuilder()->build('page.api.list');
-
-        // Build edit URL for "Save and continue editing" (include returnUrl so it persists)
-        $editUrl = $this->registry->getBackendUriBuilder()->build('page.api.edit', [
-            'id' => $id,
-            'returnUrl' => $returnUrl,
-        ]);
-
+    /**
+     * {@inheritdoc}
+     */
+    protected function addEditAssets(): void
+    {
         $this->addConfigurationEditorAssets();
-
-        // Build the entity form with URLs passed via form_state storage (Drupal-specific)
-        // Use 'dmf_' prefix to avoid conflicts with other modules
-        $form = $this->entityFormBuilder->getForm($entity, 'edit', [
-            'dmf_returnUrl' => $returnUrl,
-            'dmf_editUrl' => $editUrl,
-        ]);
-
-        // Convert form render array to HTML
-        $formHtml = $this->renderer->renderRoot($form);
-
-        // Add form HTML and entity to viewData for template rendering
-        $this->viewData['formHtml'] = $formHtml;
-        $this->viewData['endpoint'] = $entity;
-
-        return $this->render();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function saveAction(): Response
-    {
-        // Drupal's entity form handles submission automatically via form API
-        // The form in editAction() includes submit handlers that save the entity
-        // So when a form is submitted, it goes through Drupal's form system,
-        // not through this saveAction()
-        //
-        // For now, just redirect back to the list
-        // In practice, the form's submit handler will save and redirect
-        return $this->redirect('page.api.list');
     }
 }

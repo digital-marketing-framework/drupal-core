@@ -87,6 +87,7 @@ services:
       - '@dmf_core.file_storage'
       - '@dmf_core.api_endpoint_repository'
       - '@entity.form_builder'
+      - '@entity_type.manager'
       - '@renderer'
     tags:
       - { name: event_subscriber }
