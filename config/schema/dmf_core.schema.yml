@@ -55,6 +55,16 @@ dmf_core.global_settings:
         enabled:
           type: boolean
           label: 'Enable notifications'
+    cleanup:
+      type: mapping
+      label: 'Cleanup'
+      mapping:
+        cronEnabled:
+          type: boolean
+          label: 'Enable cron task'
+        cronMinInterval:
+          type: integer
+          label: 'Minimum cron interval (in seconds)'
 
 # API Endpoint entity schema
 dmf_core.dmf_api_endpoint.*:

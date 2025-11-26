@@ -22,3 +22,7 @@ dataPrivacy:
 
 notifications:
   enabled: false
+
+cleanup:
+  cronEnabled: false
+  cronMinInterval: 3600

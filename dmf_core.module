@@ -7,6 +7,7 @@
 
 use DigitalMarketingFramework\Core\ConfigurationEditor\MetaData;
 use DigitalMarketingFramework\Core\Registry\RegistryInterface as CoreRegistryInterface;
+use Drupal\dmf_core\Cleanup\GlobalConfiguration\Settings\CleanupSettings;
 
 /**
  * Implements hook_library_info_build().
@@ -86,4 +87,52 @@ function dmf_core_library_info_build(): array {
   }
 
   return $libraries;
+}
+
+/**
+ * Implements hook_cron().
+ *
+ * Executes Anyrel cleanup tasks on cron runs.
+ *
+ * This can be enabled/disabled and the minimum interval configured
+ * in Anyrel's global configuration under General > Cleanup settings.
+ */
+function dmf_core_cron(): void {
+  try {
+    /** @var \Drupal\dmf_core\Registry\RegistryCollection $registryCollection */
+    $registryCollection = \Drupal::service('dmf_core.registry_collection');
+
+    /** @var CoreRegistryInterface $registry */
+    $registry = $registryCollection->getRegistryByClass(CoreRegistryInterface::class);
+
+    // Get cleanup settings to check if cron is enabled and get min interval.
+    /** @var CleanupSettings $cleanupSettings */
+    $cleanupSettings = $registry->getGlobalConfiguration()->getGlobalSettings(CleanupSettings::class);
+
+    // Check if cron task is enabled.
+    if (!$cleanupSettings->isCronEnabled()) {
+      return;
+    }
+
+    // Check minimum interval since last run.
+    $lastRun = \Drupal::state()->get('dmf_core.last_cleanup_cron_run', 0);
+    $minInterval = $cleanupSettings->getCronMinInterval();
+
+    if (time() - $lastRun < $minInterval) {
+      return;
+    }
+
+    // Update timestamp before processing.
+    \Drupal::state()->set('dmf_core.last_cleanup_cron_run', time());
+
+    // Execute cleanup tasks.
+    $cleanupManager = $registry->getCleanupManager();
+    $cleanupManager->cleanup();
+  }
+  catch (\Exception $e) {
+    \Drupal::logger('dmf_core')->error(
+      'Error executing cleanup tasks during cron: @message',
+      ['@message' => $e->getMessage()]
+    );
+  }
 }
