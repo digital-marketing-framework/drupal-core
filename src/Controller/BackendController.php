@@ -105,83 +105,54 @@ class BackendController
         }
 
         // For HTML responses, return a render array to integrate with Drupal's admin theme
-        $html = $result->getContent();
-
-        // Extract and attach JavaScript and CSS files
-        $attachments = $this->extractAssets($html);
-
         return [
-            '#markup' => Markup::create($html),
-            '#attached' => $attachments,
+            '#markup' => Markup::create($result->getContent()),
+            '#attached' => $this->buildAttachments($result),
         ];
     }
 
     /**
-     * Extract JavaScript and CSS assets from HTML content.
+     * Build Drupal #attached array from Response assets.
      *
-     * @param string $html
-     *   The rendered HTML content.
+     * @param Response $response
+     *   The Anyrel response containing scripts and stylesheets.
      *
      * @return array<string,mixed>
-     *   Drupal #attached array with 'js' and 'css' keys.
+     *   Drupal #attached array with 'html_head' entries.
      */
-    protected function extractAssets(string &$html): array
+    protected function buildAttachments(Response $response): array
     {
         $attachments = [
             'html_head' => [],
         ];
 
-        // Extract <link> tags for CSS
-        if (preg_match_all('/<link[^>]+rel=["\']stylesheet["\'][^>]*>/i', $html, $cssMatches)) {
-            foreach ($cssMatches[0] as $linkTag) {
-                if (preg_match('/href=["\']([^"\']+)["\']/i', $linkTag, $hrefMatch)) {
-                    $cssUrl = $hrefMatch[1];
-                    $attachments['html_head'][] = [
-                        [
-                            '#tag' => 'link',
-                            '#attributes' => [
-                                'rel' => 'stylesheet',
-                                'href' => $cssUrl,
-                                'media' => 'all',
-                            ],
-                        ],
-                        'dmf_backend_css_' . md5($cssUrl),
-                    ];
-                    // Remove the link tag from HTML
-                    $html = str_replace($linkTag, '', $html);
-                }
-            }
+        // Add stylesheets
+        foreach ($response->getStyleSheets() as $name => $path) {
+            $attachments['html_head'][] = [
+                [
+                    '#tag' => 'link',
+                    '#attributes' => [
+                        'rel' => 'stylesheet',
+                        'href' => $path,
+                        'media' => 'all',
+                    ],
+                ],
+                'dmf_backend_css_' . $name,
+            ];
         }
 
-        // Extract <script> tags
-        if (preg_match_all('/<script[^>]+src=["\']([^"\']+)["\'][^>]*><\/script>/i', $html, $scriptMatches, PREG_SET_ORDER)) {
-            foreach ($scriptMatches as $match) {
-                $scriptTag = $match[0];
-                $scriptUrl = $match[1];
-
-                $attributes = ['src' => $scriptUrl];
-
-                // Check for type="module"
-                if (preg_match('/type=["\']module["\']/i', $scriptTag)) {
-                    $attributes['type'] = 'module';
-                }
-
-                // Check for defer
-                if (preg_match('/defer(?:=["\']defer["\'])?/i', $scriptTag)) {
-                    $attributes['defer'] = 'defer';
-                }
-
-                $attachments['html_head'][] = [
-                    [
-                        '#tag' => 'script',
-                        '#attributes' => $attributes,
+        // Add scripts
+        foreach ($response->getScripts() as $name => $path) {
+            $attachments['html_head'][] = [
+                [
+                    '#tag' => 'script',
+                    '#attributes' => [
+                        'src' => $path,
+                        'type' => 'module',
                     ],
-                    'dmf_backend_js_' . md5($scriptUrl),
-                ];
-
-                // Remove the script tag from HTML
-                $html = str_replace($scriptTag, '', $html);
-            }
+                ],
+                'dmf_backend_js_' . $name,
+            ];
         }
 
         return $attachments;
