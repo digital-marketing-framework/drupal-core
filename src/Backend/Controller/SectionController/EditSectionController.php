@@ -143,15 +143,4 @@ abstract class EditSectionController extends SectionController
 
         return $this->render();
     }
-
-    /**
-     * {@inheritdoc}
-     *
-     * Drupal's entity form handles submission automatically via form API.
-     * This action just redirects back to the list.
-     */
-    protected function saveAction(): Response
-    {
-        return $this->redirect($this->getListRoute());
-    }
 }
