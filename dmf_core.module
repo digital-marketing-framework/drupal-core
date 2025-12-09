@@ -6,13 +6,15 @@
  */
 
 use DigitalMarketingFramework\Core\ConfigurationEditor\MetaData;
+use DigitalMarketingFramework\Core\Registry\RegistryCollectionInterface;
 use DigitalMarketingFramework\Core\Registry\RegistryInterface as CoreRegistryInterface;
+use DigitalMarketingFramework\Core\Resource\Asset\AssetServiceInterface;
 use Drupal\dmf_core\Cleanup\GlobalConfiguration\Settings\CleanupSettings;
 
 /**
  * Implements hook_library_info_build().
  *
- * Dynamically builds the configuration-editor library with resolved asset URLs.
+ * Dynamically builds libraries with resolved asset URLs.
  * Assets are served from public:// with content-addressed hashed filenames.
  */
 function dmf_core_library_info_build(): array {
@@ -28,65 +30,118 @@ function dmf_core_library_info_build(): array {
     $coreRegistry = $registryCollection->getRegistryByClass(CoreRegistryInterface::class);
     $assetService = $coreRegistry->getAssetService();
 
-    // Get the module path for local JS files.
-    $modulePath = \Drupal::service('extension.list.module')->getPath('dmf_core');
+    // Build configuration-editor library.
+    $libraries['configuration-editor'] = _dmf_core_build_configuration_editor_library($assetService);
 
-    $library = [
-      'version' => '1.0',
-      'js' => [
-        // Drupal behavior that dispatches init event after AJAX content loads.
-        '/' . $modulePath . '/js/dmf-configuration-editor-init.js' => [
-          'type' => 'external',
-        ],
-      ],
-      'css' => [
-        'component' => [],
-      ],
-      'dependencies' => [
-        'core/drupal',
-        'core/once',
-      ],
-    ];
-
-    // Add JavaScript files (ES modules).
-    // makeAssetPublic() returns a relative path, prepend '/' to make it absolute.
-    foreach (MetaData::SCRIPTS as $name => $path) {
-      $publicUrl = '/' . $assetService->makeAssetPublic($path);
-      $library['js'][$publicUrl] = [
-        'type' => 'external',
-        'attributes' => [
-          'type' => 'module',
-        ],
-      ];
+    // Build frontend-scripts library.
+    $frontendScriptsLibrary = _dmf_core_build_frontend_scripts_library($registryCollection, $assetService);
+    if ($frontendScriptsLibrary !== null) {
+      $libraries['frontend-scripts'] = $frontendScriptsLibrary;
     }
-
-    // Add CSS files.
-    // makeAssetPublic() returns a relative path, prepend '/' to make it absolute.
-    foreach (MetaData::STYLES as $name => $path) {
-      $publicUrl = '/' . $assetService->makeAssetPublic($path);
-      $library['css']['component'][$publicUrl] = [
-        'type' => 'external',
-      ];
-    }
-
-    // Ensure font assets are copied to public directory (referenced by CSS).
-    foreach (MetaData::ASSETS as $path) {
-      $assetService->makeAssetPublic($path);
-    }
-
-    $libraries['configuration-editor'] = $library;
   }
   catch (\Exception $e) {
     // During cache rebuild or early bootstrap, services may not be available.
     // Return empty library - it will be built on next request when services
     // are ready.
     \Drupal::logger('dmf_core')->warning(
-      'Could not build configuration-editor library: @message',
+      'Could not build libraries: @message',
       ['@message' => $e->getMessage()]
     );
   }
 
   return $libraries;
+}
+
+/**
+ * Builds the configuration-editor library definition.
+ */
+function _dmf_core_build_configuration_editor_library(AssetServiceInterface $assetService): array {
+  // Get the module path for local JS files.
+  $modulePath = \Drupal::service('extension.list.module')->getPath('dmf_core');
+
+  $library = [
+    'version' => '1.0',
+    'js' => [
+      // Drupal behavior that dispatches init event after AJAX content loads.
+      '/' . $modulePath . '/js/dmf-configuration-editor-init.js' => [
+        'type' => 'external',
+      ],
+    ],
+    'css' => [
+      'component' => [],
+    ],
+    'dependencies' => [
+      'core/drupal',
+      'core/once',
+    ],
+  ];
+
+  // Add JavaScript files (ES modules).
+  // makeAssetPublic() returns a relative path, prepend '/' to make it absolute.
+  foreach (MetaData::SCRIPTS as $name => $path) {
+    $publicUrl = '/' . $assetService->makeAssetPublic($path);
+    $library['js'][$publicUrl] = [
+      'type' => 'external',
+      'attributes' => [
+        'type' => 'module',
+      ],
+    ];
+  }
+
+  // Add CSS files.
+  // makeAssetPublic() returns a relative path, prepend '/' to make it absolute.
+  foreach (MetaData::STYLES as $name => $path) {
+    $publicUrl = '/' . $assetService->makeAssetPublic($path);
+    $library['css']['component'][$publicUrl] = [
+      'type' => 'external',
+    ];
+  }
+
+  // Ensure font assets are copied to public directory (referenced by CSS).
+  foreach (MetaData::ASSETS as $path) {
+    $assetService->makeAssetPublic($path);
+  }
+
+  return $library;
+}
+
+/**
+ * Builds the frontend-scripts library definition.
+ *
+ * Aggregates FRONTEND_SCRIPTS from all registered packages across all domains.
+ */
+function _dmf_core_build_frontend_scripts_library(RegistryCollectionInterface $registryCollection, AssetServiceInterface $assetService): ?array {
+  // Get all frontend scripts from all registries.
+  // Returns: ['core' => ['package' => ['path1', 'path2']], 'collector' => [...]]
+  $frontendScripts = $registryCollection->getFrontendScripts();
+
+  if (empty($frontendScripts)) {
+    return null;
+  }
+
+  $library = [
+    'version' => '1.0',
+    'js' => [],
+    'dependencies' => [
+      'core/drupal',
+    ],
+  ];
+
+  // Process scripts by type (domain) and package.
+  foreach ($frontendScripts as $type => $packages) {
+    foreach ($packages as $package => $scripts) {
+      foreach ($scripts as $script) {
+        // makeAssetPublic() resolves PKG: paths and copies to public://.
+        // Returns relative path, prepend '/' for absolute URL.
+        $publicUrl = '/' . $assetService->makeAssetPublic($script);
+        $library['js'][$publicUrl] = [
+          'type' => 'external',
+        ];
+      }
+    }
+  }
+
+  return !empty($library['js']) ? $library : null;
 }
 
 /**
