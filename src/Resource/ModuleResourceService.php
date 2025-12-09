@@ -66,7 +66,10 @@ class ModuleResourceService extends ResourceService
             return null;
         }
 
-        return self::IDENTIFIER_PREFIX . ':' . $fileInfo['module'] . '/res';
+        // Extract the first folder segment (res, css, js, images, or fonts)
+        $firstFolder = explode('/', $fileInfo['path'])[0];
+
+        return self::IDENTIFIER_PREFIX . ':' . $fileInfo['module'] . '/' . $firstFolder;
     }
 
     public function isAssetResource(string $identifier): bool
