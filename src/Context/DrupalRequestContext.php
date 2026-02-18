@@ -3,6 +3,7 @@
 namespace Drupal\dmf_core\Context;
 
 use DigitalMarketingFramework\Core\Context\RequestContext;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 class DrupalRequestContext extends RequestContext
@@ -16,7 +17,7 @@ class DrupalRequestContext extends RequestContext
     public function getCookies(): array
     {
         $request = $this->requestStack->getCurrentRequest();
-        if ($request === null) {
+        if (!$request instanceof Request) {
             return [];
         }
 
@@ -26,18 +27,18 @@ class DrupalRequestContext extends RequestContext
     public function getIpAddress(): ?string
     {
         $request = $this->requestStack->getCurrentRequest();
-        if ($request === null) {
+        if (!$request instanceof Request) {
             return null;
         }
 
-        // Symfony's getClientIp() already handles X-Forwarded-For and other proxy headers
+        // Symfony's getClientIp() already handles X-Forwarded-For and other proxy headers.
         return $request->getClientIp();
     }
 
     public function getHost(): ?string
     {
         $request = $this->requestStack->getCurrentRequest();
-        if ($request === null) {
+        if (!$request instanceof Request) {
             return null;
         }
 
@@ -47,7 +48,7 @@ class DrupalRequestContext extends RequestContext
     public function getUri(): ?string
     {
         $request = $this->requestStack->getCurrentRequest();
-        if ($request === null) {
+        if (!$request instanceof Request) {
             return null;
         }
 
@@ -57,7 +58,7 @@ class DrupalRequestContext extends RequestContext
     public function getReferer(): ?string
     {
         $request = $this->requestStack->getCurrentRequest();
-        if ($request === null) {
+        if (!$request instanceof Request) {
             return null;
         }
 
@@ -67,7 +68,7 @@ class DrupalRequestContext extends RequestContext
     public function getRequestVariables(): array
     {
         $request = $this->requestStack->getCurrentRequest();
-        if ($request === null) {
+        if (!$request instanceof Request) {
             return [];
         }
 
@@ -77,11 +78,11 @@ class DrupalRequestContext extends RequestContext
     public function getRequestVariable(string $name): string
     {
         $request = $this->requestStack->getCurrentRequest();
-        if ($request === null) {
+        if (!$request instanceof Request) {
             return '';
         }
 
-        // Map common request variables to Symfony Request methods for consistency
+        // Map common request variables to Symfony Request methods for consistency.
         return match ($name) {
             'REMOTE_ADDR' => $request->getClientIp() ?? '',
             'HTTP_USER_AGENT' => $request->headers->get('User-Agent', ''),
@@ -96,7 +97,7 @@ class DrupalRequestContext extends RequestContext
     public function getRequestArgument(string $name): mixed
     {
         $request = $this->requestStack->getCurrentRequest();
-        if ($request === null) {
+        if (!$request instanceof Request) {
             return null;
         }
 
@@ -106,7 +107,7 @@ class DrupalRequestContext extends RequestContext
     public function getRequestArguments(): array
     {
         $request = $this->requestStack->getCurrentRequest();
-        if ($request === null) {
+        if (!$request instanceof Request) {
             return [];
         }
 

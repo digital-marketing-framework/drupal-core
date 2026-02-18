@@ -2,8 +2,8 @@
 
 namespace Drupal\dmf_core\Entity;
 
-use Drupal\Core\Config\Entity\ConfigEntityBase;
 use DigitalMarketingFramework\Core\Model\Api\EndPointInterface;
+use Drupal\Core\Config\Entity\ConfigEntityBase;
 
 /**
  * Defines the API Endpoint entity.

@@ -10,10 +10,13 @@ use DigitalMarketingFramework\Core\Model\Data\Value\FileValue;
 use DigitalMarketingFramework\Core\Model\Data\Value\FileValueInterface;
 use Drupal\Core\File\Exception\DirectoryNotReadyException;
 use Drupal\Core\File\Exception\FileException;
-use Drupal\Core\File\Exception\FileWriteException;
+use Drupal\Core\File\Exception\InvalidStreamWrapperException;
 use Drupal\Core\File\Exception\NotRegularDirectoryException;
+use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\File\FileUrlGeneratorInterface;
+use InvalidArgumentException;
+use LogicException;
 use Symfony\Component\Mime\MimeTypeGuesserInterface;
 use ValueError;
 
@@ -50,12 +53,14 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
         $path = $this->normalizePath($fileIdentifier);
         if (!$this->fileExists($fileIdentifier)) {
             $this->logger->warning(sprintf('File %s does not exist.', $fileIdentifier));
+
             return null;
         }
 
         $contents = file_get_contents($path);
         if ($contents === false) {
             $this->logger->warning(sprintf('Could not read file %s.', $fileIdentifier));
+
             return null;
         }
 
@@ -76,10 +81,7 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
         $result = file_put_contents($path, $fileContent);
 
         if ($result === false) {
-            throw new DigitalMarketingFrameworkException(
-                sprintf('Failed to write file %s', $fileIdentifier),
-                1732020001
-            );
+            throw new DigitalMarketingFrameworkException(sprintf('Failed to write file %s', $fileIdentifier), 1732020001);
         }
     }
 
@@ -102,8 +104,7 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
             return null;
         }
 
-        // Use Drupal's basename for proper stream wrapper support
-        return $this->fileSystem->basename($path);
+        return basename($path);
     }
 
     public function getFileBaseName(string $fileIdentifier): ?string
@@ -126,12 +127,14 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
 
         // Use pathinfo on the filename (not the full path with stream wrapper)
         $extension = pathinfo($fileName, PATHINFO_EXTENSION);
+
         return $extension !== '' ? $extension : null;
     }
 
     public function fileExists(string $fileIdentifier): bool
     {
         $path = $this->normalizePath($fileIdentifier);
+
         return file_exists($path) && is_file($path);
     }
 
@@ -170,6 +173,7 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
             }
         } catch (NotRegularDirectoryException $e) {
             $this->logger->warning(sprintf('Error scanning folder %s: %s', $folderIdentifier, $e->getMessage()));
+
             return [];
         }
 
@@ -179,6 +183,7 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
     public function folderExists(string $folderIdentifier): bool
     {
         $path = $this->normalizePath($folderIdentifier);
+
         return file_exists($path) && is_dir($path);
     }
 
@@ -195,17 +200,10 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
                 );
 
                 if (!$result) {
-                    throw new DigitalMarketingFrameworkException(
-                        sprintf('Failed to create folder %s', $folderIdentifier),
-                        1732020002
-                    );
+                    throw new DigitalMarketingFrameworkException(sprintf('Failed to create folder %s', $folderIdentifier), 1732020002);
                 }
             } catch (DirectoryNotReadyException $e) {
-                throw new DigitalMarketingFrameworkException(
-                    sprintf('Error creating folder %s: %s', $folderIdentifier, $e->getMessage()),
-                    1732020003,
-                    $e
-                );
+                throw new DigitalMarketingFrameworkException(sprintf('Error creating folder %s: %s', $folderIdentifier, $e->getMessage()), 1732020003, $e);
             }
         }
     }
@@ -216,38 +214,22 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
         $targetFolder = $this->normalizePath($folderIdentifier);
 
         if (!$this->fileExists($fileIdentifier)) {
-            throw new DigitalMarketingFrameworkException(
-                sprintf('Source file "%s" not found', $fileIdentifier),
-                1732020004
-            );
+            throw new DigitalMarketingFrameworkException(sprintf('Source file "%s" not found', $fileIdentifier), 1732020004);
         }
 
         if (!$this->folderExists($folderIdentifier)) {
-            throw new DigitalMarketingFrameworkException(
-                sprintf('Target folder "%s" not found', $folderIdentifier),
-                1732020005
-            );
+            throw new DigitalMarketingFrameworkException(sprintf('Target folder "%s" not found', $folderIdentifier), 1732020005);
         }
 
         $fileName = $this->getFileName($fileIdentifier);
         $targetPath = $targetFolder . '/' . $fileName;
 
         try {
-            $result = $this->fileSystem->copy($sourcePath, $targetPath, FileSystemInterface::EXISTS_REPLACE);
-            if (!$result) {
-                throw new DigitalMarketingFrameworkException(
-                    sprintf('Failed to copy file "%s" to "%s"', $fileIdentifier, $folderIdentifier),
-                    1732020006
-                );
-            }
+            $this->fileSystem->copy($sourcePath, $targetPath, FileExists::Replace);
 
             return $targetPath;
-        } catch (FileException | ValueError $e) {
-            throw new DigitalMarketingFrameworkException(
-                sprintf('Error copying file: %s', $e->getMessage()),
-                1732020007,
-                $e
-            );
+        } catch (FileException|ValueError $e) {
+            throw new DigitalMarketingFrameworkException(sprintf('Error copying file: %s', $e->getMessage()), 1732020007, $e);
         }
     }
 
@@ -261,8 +243,9 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
         // Use Drupal's FileUrlGenerator (Drupal 10+)
         try {
             return $this->fileUrlGenerator->generateAbsoluteString($path);
-        } catch (\Exception $e) {
+        } catch (InvalidStreamWrapperException $e) {
             $this->logger->warning(sprintf('Failed to generate URL for %s: %s', $fileIdentifier, $e->getMessage()));
+
             return '';
         }
     }
@@ -277,8 +260,9 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
         try {
             // Use Drupal's MIME type guesser service
             return $this->mimeTypeGuesser->guessMimeType($path);
-        } catch (\Exception $e) {
+        } catch (InvalidArgumentException|LogicException $e) {
             $this->logger->warning(sprintf('Failed to determine MIME type for %s: %s', $fileIdentifier, $e->getMessage()));
+
             return '';
         }
     }
@@ -315,6 +299,7 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
 
         if ($tempFile === false) {
             $this->logger->warning('Failed to create temp file');
+
             return false;
         }
 
@@ -323,8 +308,10 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
             $newTempFile = $tempFile . $fileSuffix;
             if (!rename($tempFile, $newTempFile)) {
                 $this->logger->warning(sprintf('Failed to rename temp file to add suffix %s', $fileSuffix));
+
                 return false;
             }
+
             $tempFile = $newTempFile;
         }
 
@@ -333,6 +320,7 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
 
         if ($result === false) {
             $this->logger->warning(sprintf('Failed to write temp file %s', $tempFile));
+
             return false;
         }
 

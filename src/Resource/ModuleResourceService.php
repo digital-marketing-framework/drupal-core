@@ -3,6 +3,7 @@
 namespace Drupal\dmf_core\Resource;
 
 use DigitalMarketingFramework\Core\Resource\ResourceService;
+use Drupal\Core\Extension\Exception\UnknownExtensionException;
 use Drupal\Core\Extension\ModuleExtensionList;
 
 /**
@@ -43,9 +44,9 @@ class ModuleResourceService extends ResourceService
         }
 
         // Get module path from Drupal's extension system
-        $modulePath = $this->moduleList->getPath($fileInfo['module']);
-
-        if ($modulePath === null) {
+        try {
+            $modulePath = $this->moduleList->getPath($fileInfo['module']);
+        } catch (UnknownExtensionException) {
             return null;
         }
 

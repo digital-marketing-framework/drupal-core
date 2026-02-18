@@ -28,7 +28,7 @@ class GlobalConfiguration extends DefaultGlobalConfiguration
         $value = $config->getRawData();
 
         // If config object is empty, fall back to parent (schema defaults)
-        if (empty($value)) {
+        if ($value === []) {
             $value = parent::get($key, $default, false);
         }
 

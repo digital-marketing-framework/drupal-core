@@ -19,7 +19,7 @@ class UriBuilder implements UriBuilderInterface
         }
 
         // Routes starting with "page.*" use the main backend route
-        // Routes starting with "ajax.*" use the AJAX route
+        // Routes starting with "ajax.*" use the AJAX route.
         if (str_starts_with($route, 'page')) {
             $url = Url::fromRoute('dmf_core.backend', $parameters);
         } else {

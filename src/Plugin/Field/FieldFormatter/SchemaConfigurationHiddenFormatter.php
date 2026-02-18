@@ -6,18 +6,21 @@ use Drupal\Core\Field\Attribute\FieldFormatter;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\dmf_core\Plugin\Field\FieldType\SchemaConfigurationItem;
 
 /**
  * Formatter that hides the schema configuration field from display.
  *
  * Use this formatter when the schema configuration should not be rendered
  * on the frontend (e.g., for backend-only configuration fields).
+ *
+ * @extends FormatterBase<FieldItemListInterface<SchemaConfigurationItem>>
  */
 #[FieldFormatter(
-  id: 'dmf_schema_configuration_hidden',
-  label: new TranslatableMarkup('Hidden'),
-  description: new TranslatableMarkup('Do not display the configuration.'),
-  field_types: ['dmf_schema_configuration'],
+    id: 'dmf_schema_configuration_hidden',
+    label: new TranslatableMarkup('Hidden'),
+    description: new TranslatableMarkup('Do not display the configuration.'),
+    field_types: ['dmf_schema_configuration'],
 )]
 class SchemaConfigurationHiddenFormatter extends FormatterBase
 {

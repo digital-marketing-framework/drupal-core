@@ -114,9 +114,11 @@ abstract class AbstractCoreRegistryUpdateEventSubscriber implements EventSubscri
             case RegistryUpdateType::GLOBAL_CONFIGURATION:
                 $this->initGlobalConfiguration($registry);
                 break;
+
             case RegistryUpdateType::SERVICE:
                 $this->initServices($registry);
                 break;
+
             case RegistryUpdateType::PLUGIN:
                 $this->initPlugins($registry);
                 break;

@@ -3,6 +3,7 @@
 namespace Drupal\dmf_core\Utility;
 
 use DigitalMarketingFramework\Core\GlobalConfiguration\Schema\CoreGlobalConfigurationSchema;
+use Drupal;
 use Drupal\Core\Config\ConfigFactoryInterface;
 
 /**
@@ -20,14 +21,14 @@ class ApiUtility
      * Reads directly from Drupal's config system without bootstrapping Anyrel.
      *
      * @return bool
-     *   TRUE if API is enabled, FALSE otherwise.
+     *   TRUE if API is enabled, FALSE otherwise
      */
     public static function enabled(): bool
     {
         $config = static::getConfigFactory()->get('dmf_core.global_settings');
         $data = $config->getRawData();
 
-        return (bool) ($data['api']['enabled'] ?? CoreGlobalConfigurationSchema::DEFAULT_API_ENABLED);
+        return (bool)($data['api']['enabled'] ?? CoreGlobalConfigurationSchema::DEFAULT_API_ENABLED);
     }
 
     /**
@@ -43,16 +44,16 @@ class ApiUtility
         $config = static::getConfigFactory()->get('dmf_core.global_settings');
         $data = $config->getRawData();
 
-        return (string) ($data['api']['basePath'] ?? CoreGlobalConfigurationSchema::DEFAULT_API_BASE_PATH);
+        return (string)($data['api']['basePath'] ?? CoreGlobalConfigurationSchema::DEFAULT_API_BASE_PATH);
     }
 
     /**
      * Get Drupal's config factory.
      *
-     * @return \Drupal\Core\Config\ConfigFactoryInterface
+     * @return ConfigFactoryInterface
      */
     protected static function getConfigFactory(): ConfigFactoryInterface
     {
-        return \Drupal::configFactory();
+        return Drupal::configFactory();
     }
 }

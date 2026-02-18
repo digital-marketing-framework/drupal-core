@@ -13,8 +13,8 @@ class AssetUriBuilder implements AssetUriBuilderInterface
     /**
      * Constructor.
      *
-     * @param \DigitalMarketingFramework\Core\Registry\RegistryInterface $registry
-     *   The Anyrel registry.
+     * @param RegistryInterface $registry
+     *   The Anyrel registry
      */
     public function __construct(
         protected RegistryInterface $registry,

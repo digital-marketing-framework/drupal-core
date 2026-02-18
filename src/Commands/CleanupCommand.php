@@ -11,29 +11,26 @@ use Drush\Commands\DrushCommands;
 class CleanupCommand extends DrushCommands
 {
     /**
-     * The registry collection.
-     *
-     * @var \Drupal\dmf_core\Registry\RegistryCollection
-     */
-    protected RegistryCollection $registryCollection;
-
-    /**
      * Constructs a CleanupCommand object.
      *
-     * @param \Drupal\dmf_core\Registry\RegistryCollection $registryCollection
-     *   The registry collection.
+     * @param RegistryCollection $registryCollection
+     *   The registry collection
      */
-    public function __construct(RegistryCollection $registryCollection)
-    {
+    public function __construct(/**
+                                 * The registry collection.
+                                 */
+        protected RegistryCollection $registryCollection,
+    ) {
         parent::__construct();
-        $this->registryCollection = $registryCollection;
     }
 
     /**
      * Execute all Anyrel cleanup tasks.
      *
      * @command anyrel:cleanup
+     *
      * @aliases anyrel-cleanup
+     *
      * @usage anyrel:cleanup
      *   Execute all Anyrel cleanup tasks.
      */

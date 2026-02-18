@@ -2,7 +2,10 @@
 
 namespace Drupal\dmf_core\Routing;
 
+use DigitalMarketingFramework\Core\Registry\RegistryCollectionInterface;
+use Drupal;
 use Drupal\Core\Routing\RouteSubscriberBase;
+use Drupal\dmf_core\Controller\ApiController;
 use Drupal\dmf_core\Utility\ApiUtility;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
@@ -18,6 +21,15 @@ use Symfony\Component\Routing\RouteCollection;
 class ApiRouteSubscriber extends RouteSubscriberBase
 {
     /**
+     * Bootstrap Anyrel to get available routes
+     * Note: This only happens during cache rebuild, not on every request
+     */
+    public function __construct(
+        protected RegistryCollectionInterface $registryCollection,
+    ) {
+    }
+
+    /**
      * {@inheritdoc}
      */
     protected function alterRoutes(RouteCollection $collection): void
@@ -30,10 +42,7 @@ class ApiRouteSubscriber extends RouteSubscriberBase
         // Get configured base path
         $basePath = ApiUtility::getBasePath();
 
-        // Bootstrap Anyrel to get available routes
-        // Note: This only happens during cache rebuild, not on every request
-        $registryCollection = \Drupal::service('dmf_core.registry_collection');
-        $entryRouteResolver = $registryCollection->getApiEntryRouteResolver();
+        $entryRouteResolver = $this->registryCollection->getApiEntryRouteResolver();
 
         // Get all available API routes from Anyrel
         $apiRoutes = $entryRouteResolver->getAllResourceRoutes();
@@ -58,7 +67,7 @@ class ApiRouteSubscriber extends RouteSubscriberBase
             $route = new Route(
                 $fullPath,
                 [
-                    '_controller' => '\Drupal\dmf_core\Controller\ApiController::handle',
+                    '_controller' => ApiController::class . '::handle',
                     '_title' => 'Anyrel API',
                     'api_route' => $apiRouteParam,
                 ],

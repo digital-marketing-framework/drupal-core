@@ -8,6 +8,7 @@ use DigitalMarketingFramework\Core\Registry\RegistryCollectionInterface;
 use DigitalMarketingFramework\Core\Registry\RegistryInterface as CoreRegistryInterface;
 use Drupal\Core\Field\Attribute\FieldWidget;
 use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -21,20 +22,18 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * JavaScript application to enhance it with a modal-based UI.
  */
 #[FieldWidget(
-  id: 'dmf_schema_configuration_editor',
-  label: new TranslatableMarkup('Schema Configuration Editor'),
-  description: new TranslatableMarkup('Textarea with Anyrel schema-based configuration editor integration.'),
-  field_types: ['dmf_schema_configuration'],
+    id: 'dmf_schema_configuration_editor',
+    label: new TranslatableMarkup('Schema Configuration Editor'),
+    description: new TranslatableMarkup('Textarea with Anyrel schema-based configuration editor integration.'),
+    field_types: ['dmf_schema_configuration'],
 )]
 class SchemaConfigurationWidget extends WidgetBase
 {
     /**
-     * The rendering service for generating textarea data attributes.
-     */
-    protected RenderingServiceInterface $renderingService;
-
-    /**
      * {@inheritdoc}
+     *
+     * @param array<mixed> $settings
+     * @param array<mixed> $third_party_settings
      */
     public function __construct(
         $plugin_id,
@@ -42,14 +41,18 @@ class SchemaConfigurationWidget extends WidgetBase
         FieldDefinitionInterface $field_definition,
         array $settings,
         array $third_party_settings,
-        RenderingServiceInterface $renderingService,
+        /**
+         * The rendering service for generating textarea data attributes.
+         */
+        protected RenderingServiceInterface $renderingService,
     ) {
         parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings);
-        $this->renderingService = $renderingService;
     }
 
     /**
      * {@inheritdoc}
+     *
+     * @param array<mixed> $configuration
      */
     public static function create(
         ContainerInterface $container,
@@ -76,6 +79,8 @@ class SchemaConfigurationWidget extends WidgetBase
 
     /**
      * {@inheritdoc}
+     *
+     * @return array<string,mixed>
      */
     public static function defaultSettings(): array
     {
@@ -90,6 +95,10 @@ class SchemaConfigurationWidget extends WidgetBase
 
     /**
      * {@inheritdoc}
+     *
+     * @param array<mixed> $form
+     *
+     * @return array<string,mixed>
      */
     public function settingsForm(array $form, FormStateInterface $form_state): array
     {
@@ -135,29 +144,36 @@ class SchemaConfigurationWidget extends WidgetBase
 
     /**
      * {@inheritdoc}
+     *
+     * @return array<string|TranslatableMarkup>
      */
     public function settingsSummary(): array
     {
-        $summary = [];
-
-        $summary[] = $this->t('Document type: @type', ['@type' => $this->getSetting('document_type')]);
-        $summary[] = $this->t('Mode: @mode', ['@mode' => $this->getSetting('mode')]);
-        $summary[] = $this->t('Rows: @rows', ['@rows' => $this->getSetting('rows')]);
-
-        return $summary;
+        return [
+            $this->t('Document type: @type', ['@type' => $this->getSetting('document_type')]),
+            $this->t('Mode: @mode', ['@mode' => $this->getSetting('mode')]),
+            $this->t('Rows: @rows', ['@rows' => $this->getSetting('rows')]),
+        ];
     }
 
     /**
      * {@inheritdoc}
+     *
+     * @param array<mixed> $element
+     * @param array<mixed> $form
+     *
+     * @return array<string,mixed>
      */
-    public function formElement(
+    public function formElement(// @phpstan-ignore missingType.generics, missingType.iterableValue
         FieldItemListInterface $items,
         $delta,
         array $element,
         array &$form,
         FormStateInterface $form_state,
     ): array {
-        $value = $items[$delta]->value ?? '';
+        $item = $items[$delta];
+        assert($item instanceof FieldItemInterface);
+        $value = $item->get('value')->getValue() ?? '';
 
         // Build context identifier from entity information.
         $entity = $items->getEntity();
@@ -180,7 +196,7 @@ class SchemaConfigurationWidget extends WidgetBase
             readonly: false,
             globalDocument: false,
             documentType: $this->getSetting('document_type'),
-            includes: (bool) $this->getSetting('supports_includes'),
+            includes: (bool)$this->getSetting('supports_includes'),
             parameters: $additionalParameters,
             contextIdentifier: $contextIdentifier,
             uid: $uid,

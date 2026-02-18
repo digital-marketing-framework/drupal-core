@@ -27,11 +27,14 @@ class ApiEndpointForm extends EntityForm
     {
         $instance = parent::create($container);
         $instance->registry = $container->get('dmf_core.registry_collection')->getRegistry();
+
         return $instance;
     }
 
     /**
-     * {@inheritdoc}
+     * @param array<mixed> $form
+     *
+     * @return array<string,mixed>
      */
     public function form(array $form, FormStateInterface $form_state): array
     {
@@ -52,7 +55,7 @@ class ApiEndpointForm extends EntityForm
             '#title' => $this->t('General'),
             '#group' => 'tabs',
             '#weight' => 0,
-            '#open' => TRUE,
+            '#open' => true,
         ];
 
         $form['general']['label'] = [
@@ -61,14 +64,14 @@ class ApiEndpointForm extends EntityForm
             '#maxlength' => 255,
             '#default_value' => $endpoint->getName(),
             '#description' => $this->t('The human-readable name of the API endpoint.'),
-            '#required' => TRUE,
+            '#required' => true,
         ];
 
         $form['general']['id'] = [
             '#type' => 'machine_name',
             '#default_value' => $endpoint->id(),
             '#machine_name' => [
-                'exists' => [$this, 'exist'],
+                'exists' => $this->exist(...),
                 'source' => ['general', 'label'],
             ],
             '#disabled' => !$endpoint->isNew(),
@@ -100,9 +103,9 @@ class ApiEndpointForm extends EntityForm
             ready: true,
             mode: 'modal',
             readonly: false,
-            globalDocument: false,  // API endpoints use embedded documents, not global
+            globalDocument: false, // API endpoints use embedded documents, not global
             documentType: MetaData::DEFAULT_DOCUMENT_TYPE,
-            includes: true,  // API endpoints support document inheritance
+            includes: true, // API endpoints support document inheritance
             parameters: [],
             contextIdentifier: $contextIdentifier,
             uid: $uid
@@ -171,7 +174,9 @@ class ApiEndpointForm extends EntityForm
     }
 
     /**
-     * {@inheritdoc}
+     * @param array<mixed> $form
+     *
+     * @return array<string,mixed>
      */
     protected function actions(array $form, FormStateInterface $form_state): array
     {
@@ -231,18 +236,20 @@ class ApiEndpointForm extends EntityForm
 
     /**
      * Form submission handler for "Save and continue editing".
+     *
+     * @param array<mixed> $form
      */
     public function saveAndContinue(array $form, FormStateInterface $form_state): void
     {
         // Get edit URL from build info (passed by controller)
         $editUrl = $this->getEditUrl($form_state);
-        if ($editUrl) {
+        if ($editUrl !== '') {
             $form_state->setRedirectUrl(Url::fromUserInput($editUrl));
         }
     }
 
     /**
-     * {@inheritdoc}
+     * @param array<mixed> $form
      */
     public function save(array $form, FormStateInterface $form_state): int
     {
@@ -277,11 +284,12 @@ class ApiEndpointForm extends EntityForm
     public function exist(string $id): bool
     {
         $entity = $this->entityTypeManager
-            ->getStorage('dmf_api_endpoint')
-            ->getQuery()
-            ->condition('id', $id)
-            ->accessCheck(FALSE)
-            ->execute();
-        return (bool) $entity;
+          ->getStorage('dmf_api_endpoint')
+          ->getQuery()
+          ->condition('id', $id)
+          ->accessCheck(false)
+          ->execute();
+
+        return (bool)$entity;
     }
 }

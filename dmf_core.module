@@ -4,7 +4,7 @@
  * @file
  * Anyrel Core module functions.
  */
-
+use Drupal\dmf_core\Registry\RegistryCollection;
 use DigitalMarketingFramework\Core\ConfigurationEditor\MetaData;
 use DigitalMarketingFramework\Core\Registry\RegistryCollectionInterface;
 use DigitalMarketingFramework\Core\Registry\RegistryInterface as CoreRegistryInterface;
@@ -23,8 +23,8 @@ function dmf_core_library_info_build(): array {
   try {
     // Get the registry collection to access the asset service.
     // This may not be available during early bootstrap or cache rebuild.
-    /** @var \DigitalMarketingFramework\Core\Registry\RegistryCollectionInterface $registryCollection */
-    $registryCollection = \Drupal::service('dmf_core.registry_collection');
+    /** @var RegistryCollectionInterface $registryCollection */
+    $registryCollection = Drupal::service('dmf_core.registry_collection');
 
     /** @var CoreRegistryInterface $coreRegistry */
     $coreRegistry = $registryCollection->getRegistryByClass(CoreRegistryInterface::class);
@@ -39,11 +39,11 @@ function dmf_core_library_info_build(): array {
       $libraries['frontend-scripts'] = $frontendScriptsLibrary;
     }
   }
-  catch (\Exception $e) {
+  catch (Exception $e) {
     // During cache rebuild or early bootstrap, services may not be available.
     // Return empty library - it will be built on next request when services
     // are ready.
-    \Drupal::logger('dmf_core')->warning(
+    Drupal::logger('dmf_core')->warning(
       'Could not build libraries: @message',
       ['@message' => $e->getMessage()]
     );
@@ -57,7 +57,7 @@ function dmf_core_library_info_build(): array {
  */
 function _dmf_core_build_configuration_editor_library(AssetServiceInterface $assetService): array {
   // Get the module path for local JS files.
-  $modulePath = \Drupal::service('extension.list.module')->getPath('dmf_core');
+  $modulePath = Drupal::service('extension.list.module')->getPath('dmf_core');
 
   $library = [
     'version' => '1.0',
@@ -78,7 +78,7 @@ function _dmf_core_build_configuration_editor_library(AssetServiceInterface $ass
 
   // Add JavaScript files (ES modules).
   // makeAssetPublic() returns a relative path, prepend '/' to make it absolute.
-  foreach (MetaData::SCRIPTS as $name => $path) {
+  foreach (MetaData::SCRIPTS as $path) {
     $publicUrl = '/' . $assetService->makeAssetPublic($path);
     $library['js'][$publicUrl] = [
       'type' => 'external',
@@ -90,7 +90,7 @@ function _dmf_core_build_configuration_editor_library(AssetServiceInterface $ass
 
   // Add CSS files.
   // makeAssetPublic() returns a relative path, prepend '/' to make it absolute.
-  foreach (MetaData::STYLES as $name => $path) {
+  foreach (MetaData::STYLES as $path) {
     $publicUrl = '/' . $assetService->makeAssetPublic($path);
     $library['css']['component'][$publicUrl] = [
       'type' => 'external',
@@ -115,7 +115,7 @@ function _dmf_core_build_frontend_scripts_library(RegistryCollectionInterface $r
   // Returns: ['core' => ['package' => ['path1', 'path2']], 'collector' => [...]]
   $frontendScripts = $registryCollection->getFrontendScripts();
 
-  if (empty($frontendScripts)) {
+  if ($frontendScripts === []) {
     return null;
   }
 
@@ -128,8 +128,8 @@ function _dmf_core_build_frontend_scripts_library(RegistryCollectionInterface $r
   ];
 
   // Process scripts by type (domain) and package.
-  foreach ($frontendScripts as $type => $packages) {
-    foreach ($packages as $package => $scripts) {
+  foreach ($frontendScripts as $packages) {
+    foreach ($packages as $scripts) {
       foreach ($scripts as $script) {
         // makeAssetPublic() resolves PKG: paths and copies to public://.
         // Returns relative path, prepend '/' for absolute URL.
@@ -141,7 +141,7 @@ function _dmf_core_build_frontend_scripts_library(RegistryCollectionInterface $r
     }
   }
 
-  return !empty($library['js']) ? $library : null;
+  return empty($library['js']) ? null : $library;
 }
 
 /**
@@ -154,8 +154,8 @@ function _dmf_core_build_frontend_scripts_library(RegistryCollectionInterface $r
  */
 function dmf_core_cron(): void {
   try {
-    /** @var \Drupal\dmf_core\Registry\RegistryCollection $registryCollection */
-    $registryCollection = \Drupal::service('dmf_core.registry_collection');
+    /** @var RegistryCollection $registryCollection */
+    $registryCollection = Drupal::service('dmf_core.registry_collection');
 
     /** @var CoreRegistryInterface $registry */
     $registry = $registryCollection->getRegistryByClass(CoreRegistryInterface::class);
@@ -170,7 +170,7 @@ function dmf_core_cron(): void {
     }
 
     // Check minimum interval since last run.
-    $lastRun = \Drupal::state()->get('dmf_core.last_cleanup_cron_run', 0);
+    $lastRun = Drupal::state()->get('dmf_core.last_cleanup_cron_run', 0);
     $minInterval = $cleanupSettings->getCronMinInterval();
 
     if (time() - $lastRun < $minInterval) {
@@ -178,14 +178,14 @@ function dmf_core_cron(): void {
     }
 
     // Update timestamp before processing.
-    \Drupal::state()->set('dmf_core.last_cleanup_cron_run', time());
+    Drupal::state()->set('dmf_core.last_cleanup_cron_run', time());
 
     // Execute cleanup tasks.
     $cleanupManager = $registry->getCleanupManager();
     $cleanupManager->cleanup();
   }
-  catch (\Exception $e) {
-    \Drupal::logger('dmf_core')->error(
+  catch (Exception $e) {
+    Drupal::logger('dmf_core')->error(
       'Error executing cleanup tasks during cron: @message',
       ['@message' => $e->getMessage()]
     );

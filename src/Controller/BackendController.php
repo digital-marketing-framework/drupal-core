@@ -52,11 +52,11 @@ class BackendController
         // For POST form submissions
         $body = $request->request->all();
 
-        if (empty($body)) {
+        if ($body === []) {
             try {
                 // For POST AJAX requests with a JSON body
                 $content = $request->getContent();
-                if (!empty($content)) {
+                if ($content !== '') {
                     $decoded = json_decode($content, true, flags: JSON_THROW_ON_ERROR);
                     if (is_array($decoded)) {
                         $body = $decoded;
@@ -77,13 +77,14 @@ class BackendController
      */
     protected function getAnyrelResponse(SymfonyRequest $request): Response
     {
-        $params = $request->query->all('dmf') ?? [];
+        $params = $request->query->all('dmf');
         $route = $params['route'] ?? '';
         $arguments = $params['arguments'] ?? [];
         $body = $this->getBodyData($request);
         $method = $request->getMethod();
 
         $req = new Request($route, $arguments, $body, $method);
+
         return $this->registryCollection->getRegistry()->getBackendManager()->getResponse($req);
     }
 
@@ -92,7 +93,7 @@ class BackendController
      *
      * @return array<string,mixed>|SymfonyResponse
      *   Render array for HTML responses (integrates with Drupal admin theme),
-     *   or Symfony Response object for redirects/JSON responses.
+     *   or Symfony Response object for redirects/JSON responses
      */
     public function handleRequest(SymfonyRequest $request): array|SymfonyResponse
     {
@@ -115,10 +116,10 @@ class BackendController
      * Build Drupal #attached array from Response assets.
      *
      * @param Response $response
-     *   The Anyrel response containing scripts and stylesheets.
+     *   The Anyrel response containing scripts and stylesheets
      *
      * @return array<string,mixed>
-     *   Drupal #attached array with 'html_head' entries.
+     *   Drupal #attached array with 'html_head' entries
      */
     protected function buildAttachments(Response $response): array
     {

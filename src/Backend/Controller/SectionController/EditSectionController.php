@@ -50,7 +50,7 @@ abstract class EditSectionController extends SectionController
      * Used for default returnUrl when none is provided.
      *
      * @return string
-     *   The route name for the list page.
+     *   The route name for the list page
      */
     abstract protected function getListRoute(): string;
 
@@ -60,7 +60,7 @@ abstract class EditSectionController extends SectionController
      * Used for "Save and continue editing" functionality.
      *
      * @return string
-     *   The route name for the edit page.
+     *   The route name for the edit page
      */
     abstract protected function getEditRoute(): string;
 
@@ -70,12 +70,12 @@ abstract class EditSectionController extends SectionController
      * Override this method to pass additional options to the form.
      *
      * @param string $returnUrl
-     *   The return URL.
+     *   The return URL
      * @param string $editUrl
-     *   The edit URL for "Save and continue editing".
+     *   The edit URL for "Save and continue editing"
      *
-     * @return array
-     *   Additional form state options.
+     * @return array<string,mixed>
+     *   Additional form state options
      */
     protected function getFormOptions(string $returnUrl, string $editUrl): array
     {
@@ -89,7 +89,7 @@ abstract class EditSectionController extends SectionController
      */
     protected function addEditAssets(): void
     {
-        // Default: no additional assets
+        // Default: no additional assets.
     }
 
     /**
@@ -103,29 +103,27 @@ abstract class EditSectionController extends SectionController
             throw new DigitalMarketingFrameworkException('No entity ID provided for editing');
         }
 
-        // Load the Drupal entity directly via EntityTypeManager
+        // Load the Drupal entity directly via EntityTypeManager.
         $storage = $this->entityTypeManager->getStorage($this->getEntityTypeId());
         $entity = $storage->load($id);
 
-        if (!$entity) {
-            throw new DigitalMarketingFrameworkException(
-                sprintf('%s "%s" not found', $this->getEntityTypeId(), $id)
-            );
+        if ($entity === null) {
+            throw new DigitalMarketingFrameworkException(sprintf('%s "%s" not found', $this->getEntityTypeId(), $id));
         }
 
-        // Get returnUrl from parameters or default to list
+        // Get returnUrl from parameters or default to list.
         $returnUrl = $this->getReturnUrl($this->uriBuilder->build($this->getListRoute()));
 
-        // Build edit URL for "Save and continue editing"
+        // Build edit URL for "Save and continue editing".
         $editUrl = $this->uriBuilder->build($this->getEditRoute(), [
             'id' => $id,
             'returnUrl' => $returnUrl,
         ]);
 
-        // Add any additional assets
+        // Add any additional assets.
         $this->addEditAssets();
 
-        // Build the entity form with standard + custom options
+        // Build the entity form with standard + custom options.
         $formOptions = array_merge([
             'dmf_returnUrl' => $returnUrl,
             'dmf_editUrl' => $editUrl,
@@ -133,10 +131,10 @@ abstract class EditSectionController extends SectionController
 
         $form = $this->entityFormBuilder->getForm($entity, 'edit', $formOptions);
 
-        // Convert form render array to HTML
+        // Convert form render array to HTML.
         $formHtml = $this->renderer->renderRoot($form);
 
-        // Add form HTML and entity to viewData for template rendering
+        // Add form HTML and entity to viewData for template rendering.
         $this->assignCurrentRouteData();
         $this->viewData['formHtml'] = $formHtml;
         $this->viewData['entity'] = $entity;
