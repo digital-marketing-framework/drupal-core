@@ -4,7 +4,6 @@ namespace Drupal\dmf_core\Plugin\Field\FieldWidget;
 
 use DigitalMarketingFramework\Core\Backend\RenderingServiceInterface;
 use DigitalMarketingFramework\Core\ConfigurationEditor\MetaData;
-use DigitalMarketingFramework\Core\Registry\RegistryCollectionInterface;
 use DigitalMarketingFramework\Core\Registry\RegistryInterface as CoreRegistryInterface;
 use Drupal\Core\Field\Attribute\FieldWidget;
 use Drupal\Core\Field\FieldDefinitionInterface;
@@ -13,6 +12,7 @@ use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\dmf_core\Registry\RegistryCollection;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -60,7 +60,7 @@ class SchemaConfigurationWidget extends WidgetBase
         $plugin_id,
         $plugin_definition,
     ): static {
-        /** @var RegistryCollectionInterface $registryCollection */
+        /** @var RegistryCollection $registryCollection */
         $registryCollection = $container->get('dmf_core.registry_collection');
 
         /** @var CoreRegistryInterface $coreRegistry */
@@ -200,6 +200,8 @@ class SchemaConfigurationWidget extends WidgetBase
             parameters: $additionalParameters,
             contextIdentifier: $contextIdentifier,
             uid: $uid,
+            documentName: '',
+            contextType: '',
         );
 
         // Convert data attributes to Drupal's attribute format.

@@ -32,6 +32,12 @@
     "require-dev": {
         "mediatis/drupal-coding-standards": "^1.0"
     },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://packages.drupal.org/8"
+        }
+    ],
     "autoload": {
         "psr-4": {
             "Drupal\\dmf_core\\": "src/"

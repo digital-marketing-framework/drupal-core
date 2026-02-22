@@ -3,10 +3,10 @@
 namespace Drupal\dmf_core\Registry\EventSubscriber;
 
 use DigitalMarketingFramework\Core\Api\EndPoint\EndPointStorageInterface;
-use DigitalMarketingFramework\Core\Backend\UriBuilderInterface;
 use DigitalMarketingFramework\Core\ConfigurationDocument\Parser\YamlConfigurationDocumentParser;
 use DigitalMarketingFramework\Core\ConfigurationDocument\Storage\YamlFileConfigurationDocumentStorage;
 use DigitalMarketingFramework\Core\CoreInitialization;
+use DigitalMarketingFramework\Core\Crypto\HashServiceInterface;
 use DigitalMarketingFramework\Core\FileStorage\FileStorageInterface;
 use DigitalMarketingFramework\Core\Log\LoggerFactoryInterface;
 use DigitalMarketingFramework\Core\Registry\RegistryInterface;
@@ -18,6 +18,7 @@ use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Site\Settings;
 use Drupal\dmf_core\Backend\AssetUriBuilder;
 use Drupal\dmf_core\Backend\Controller\SectionController\ApiEditSectionController;
+use Drupal\dmf_core\Backend\UriRouteResolver\DrupalDefaultUriRouteResolver;
 use Drupal\dmf_core\GlobalConfiguration\GlobalConfiguration;
 use Drupal\dmf_core\GlobalConfiguration\Schema\CoreGlobalConfigurationSchema;
 
@@ -26,7 +27,7 @@ class CoreRegistryUpdateEventSubscriber extends AbstractCoreRegistryUpdateEventS
     public function __construct(
         protected ConfigFactoryInterface $configFactory,
         protected LoggerFactoryInterface $loggerFactory,
-        protected UriBuilderInterface $uriBuilder,
+        protected HashServiceInterface $hashService,
         protected ResourceServiceInterface $moduleResourceService,
         protected FileStorageInterface $fileStorage,
         protected EndPointStorageInterface $endPointStorage,
@@ -52,8 +53,8 @@ class CoreRegistryUpdateEventSubscriber extends AbstractCoreRegistryUpdateEventS
         // Set logger factory
         $registry->setLoggerFactory($this->loggerFactory);
 
-        // Set backend URI builder
-        $registry->setBackendUriBuilder($this->uriBuilder);
+        // Set hash service
+        $registry->setHashService($this->hashService);
 
         // Set FileStorage (Drupal implementation)
         $registry->setFileStorage($this->fileStorage);
@@ -104,6 +105,9 @@ class CoreRegistryUpdateEventSubscriber extends AbstractCoreRegistryUpdateEventS
     protected function initPlugins(RegistryInterface $registry): void
     {
         parent::initPlugins($registry);
+
+        // Register Drupal URI route resolvers
+        $registry->registerBackendUriRouteResolver(DrupalDefaultUriRouteResolver::class);
 
         // Register Drupal-specific backend section controllers with Drupal services
         $registry->registerBackendSectionController(

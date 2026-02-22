@@ -108,7 +108,9 @@ class ApiEndpointForm extends EntityForm
             includes: true, // API endpoints support document inheritance
             parameters: [],
             contextIdentifier: $contextIdentifier,
-            uid: $uid
+            uid: $uid,
+            documentName: $endpoint->getName(),
+            contextType: 'api',
         );
 
         // Convert data attributes to Drupal's attribute format

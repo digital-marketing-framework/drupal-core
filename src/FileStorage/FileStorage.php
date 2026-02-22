@@ -4,8 +4,6 @@ namespace Drupal\dmf_core\FileStorage;
 
 use DigitalMarketingFramework\Core\Exception\DigitalMarketingFrameworkException;
 use DigitalMarketingFramework\Core\FileStorage\FileStorageInterface;
-use DigitalMarketingFramework\Core\Log\LoggerAwareInterface;
-use DigitalMarketingFramework\Core\Log\LoggerAwareTrait;
 use DigitalMarketingFramework\Core\Model\Data\Value\FileValue;
 use DigitalMarketingFramework\Core\Model\Data\Value\FileValueInterface;
 use Drupal\Core\File\Exception\DirectoryNotReadyException;
@@ -15,8 +13,10 @@ use Drupal\Core\File\Exception\NotRegularDirectoryException;
 use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\File\FileUrlGeneratorInterface;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use InvalidArgumentException;
 use LogicException;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Mime\MimeTypeGuesserInterface;
 use ValueError;
 
@@ -27,15 +27,33 @@ use ValueError;
  * stream wrapper support, error handling, and future compatibility.
  * Supports Drupal stream wrappers (private://, public://, temporary://).
  */
-class FileStorage implements FileStorageInterface, LoggerAwareInterface
+class FileStorage implements FileStorageInterface
 {
-    use LoggerAwareTrait;
+    protected LoggerInterface $logger;
 
     public function __construct(
         protected FileSystemInterface $fileSystem,
         protected FileUrlGeneratorInterface $fileUrlGenerator,
         protected MimeTypeGuesserInterface $mimeTypeGuesser,
+        LoggerChannelFactoryInterface $loggerFactory,
     ) {
+        $this->logger = $loggerFactory->get('dmf_core');
+    }
+
+    /**
+     * Check if a URI's stream wrapper is available.
+     *
+     * For regular file paths (no scheme), returns true.
+     * For stream wrapper URIs (scheme://path), checks if the scheme is registered.
+     */
+    protected function isStreamWrapperAvailable(string $path): bool
+    {
+        $scheme = parse_url($path, PHP_URL_SCHEME);
+        if ($scheme === null || $scheme === false) {
+            return true;
+        }
+
+        return in_array($scheme, stream_get_wrappers(), true);
     }
 
     /**
@@ -52,14 +70,14 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
     {
         $path = $this->normalizePath($fileIdentifier);
         if (!$this->fileExists($fileIdentifier)) {
-            $this->logger->warning(sprintf('File %s does not exist.', $fileIdentifier));
+            $this->logger->warning('File {file} does not exist.', ['file' => $fileIdentifier]);
 
             return null;
         }
 
         $contents = file_get_contents($path);
         if ($contents === false) {
-            $this->logger->warning(sprintf('Could not read file %s.', $fileIdentifier));
+            $this->logger->warning('Could not read file {file}.', ['file' => $fileIdentifier]);
 
             return null;
         }
@@ -70,6 +88,10 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
     public function putFileContents(string $fileIdentifier, string $fileContent): void
     {
         $path = $this->normalizePath($fileIdentifier);
+
+        if (!$this->isStreamWrapperAvailable($path)) {
+            throw new DigitalMarketingFrameworkException(sprintf('Stream wrapper not available for path %s', $fileIdentifier), 1732020011);
+        }
 
         // Ensure parent directory exists using Drupal's dirname
         $directory = $this->fileSystem->dirname($path);
@@ -92,7 +114,10 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
             try {
                 $this->fileSystem->delete($path);
             } catch (FileException $e) {
-                $this->logger->warning(sprintf('Failed to delete file %s: %s', $fileIdentifier, $e->getMessage()));
+                $this->logger->warning(
+                    'Failed to delete file {file}: {message}',
+                    ['file' => $fileIdentifier, 'message' => $e->getMessage()]
+                );
             }
         }
     }
@@ -135,7 +160,7 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
     {
         $path = $this->normalizePath($fileIdentifier);
 
-        return file_exists($path) && is_file($path);
+        return $this->isStreamWrapperAvailable($path) && file_exists($path) && is_file($path);
     }
 
     public function fileIsReadOnly(string $fileIdentifier): bool
@@ -172,7 +197,10 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
                 }
             }
         } catch (NotRegularDirectoryException $e) {
-            $this->logger->warning(sprintf('Error scanning folder %s: %s', $folderIdentifier, $e->getMessage()));
+            $this->logger->warning(
+                'Error scanning folder {folder}: {message}',
+                ['folder' => $folderIdentifier, 'message' => $e->getMessage()]
+            );
 
             return [];
         }
@@ -184,12 +212,19 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
     {
         $path = $this->normalizePath($folderIdentifier);
 
-        return file_exists($path) && is_dir($path);
+        return $this->isStreamWrapperAvailable($path) && file_exists($path) && is_dir($path);
     }
 
     public function createFolder(string $folderIdentifier): void
     {
         $path = $this->normalizePath($folderIdentifier);
+
+        if (!$this->isStreamWrapperAvailable($path)) {
+            $this->logger->error('Stream wrapper not available for path "{path}". Please check your Drupal file system configuration.', ['path' => $folderIdentifier]);
+
+            return;
+        }
+
         if (!$this->folderExists($folderIdentifier)) {
             try {
                 // Use Drupal's prepareDirectory which handles recursive creation
@@ -244,7 +279,10 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
         try {
             return $this->fileUrlGenerator->generateAbsoluteString($path);
         } catch (InvalidStreamWrapperException $e) {
-            $this->logger->warning(sprintf('Failed to generate URL for %s: %s', $fileIdentifier, $e->getMessage()));
+            $this->logger->warning(
+                'Failed to generate URL for {file}: {message}',
+                ['file' => $fileIdentifier, 'message' => $e->getMessage()]
+            );
 
             return '';
         }
@@ -261,7 +299,10 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
             // Use Drupal's MIME type guesser service
             return $this->mimeTypeGuesser->guessMimeType($path);
         } catch (InvalidArgumentException|LogicException $e) {
-            $this->logger->warning(sprintf('Failed to determine MIME type for %s: %s', $fileIdentifier, $e->getMessage()));
+            $this->logger->warning(
+                'Failed to determine MIME type for {file}: {message}',
+                ['file' => $fileIdentifier, 'message' => $e->getMessage()]
+            );
 
             return '';
         }
@@ -298,7 +339,7 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
         $tempFile = $this->fileSystem->tempnam($this->getTempPath(), $filePrefix);
 
         if ($tempFile === false) {
-            $this->logger->warning('Failed to create temp file');
+            $this->logger->warning('Failed to create temp file.');
 
             return false;
         }
@@ -307,7 +348,7 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
         if ($fileSuffix !== '') {
             $newTempFile = $tempFile . $fileSuffix;
             if (!rename($tempFile, $newTempFile)) {
-                $this->logger->warning(sprintf('Failed to rename temp file to add suffix %s', $fileSuffix));
+                $this->logger->warning('Failed to rename temp file to add suffix {suffix}.', ['suffix' => $fileSuffix]);
 
                 return false;
             }
@@ -319,7 +360,7 @@ class FileStorage implements FileStorageInterface, LoggerAwareInterface
         $result = file_put_contents($tempFile, $fileContent);
 
         if ($result === false) {
-            $this->logger->warning(sprintf('Failed to write temp file %s', $tempFile));
+            $this->logger->warning('Failed to write temp file {file}.', ['file' => $tempFile]);
 
             return false;
         }

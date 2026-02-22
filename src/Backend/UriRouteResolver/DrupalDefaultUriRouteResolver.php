@@ -1,13 +1,18 @@
 <?php
 
-namespace Drupal\dmf_core\Backend;
+namespace Drupal\dmf_core\Backend\UriRouteResolver;
 
-use DigitalMarketingFramework\Core\Backend\UriBuilderInterface;
+use DigitalMarketingFramework\Core\Backend\UriRouteResolver\UriRouteResolver;
 use Drupal\Core\Url;
 
-class UriBuilder implements UriBuilderInterface
+class DrupalDefaultUriRouteResolver extends UriRouteResolver
 {
-    public function build(string $route, array $arguments = []): string
+    /**
+     * @var int
+     */
+    public const WEIGHT = 100;
+
+    protected function doResolve(string $route, array $arguments = []): ?string
     {
         $parameters = [
             'dmf' => [
@@ -18,8 +23,6 @@ class UriBuilder implements UriBuilderInterface
             $parameters['dmf']['arguments'] = $arguments;
         }
 
-        // Routes starting with "page.*" use the main backend route
-        // Routes starting with "ajax.*" use the AJAX route.
         if (str_starts_with($route, 'page')) {
             $url = Url::fromRoute('dmf_core.backend', $parameters);
         } else {

@@ -30,10 +30,6 @@ services:
     arguments:
       - '@logger.factory'
 
-  # Backend URI Builder
-  dmf_core.backend.uri_builder:
-    class: Drupal\dmf_core\Backend\UriBuilder
-
   # Module Resource Service
   dmf_core.resource.module:
     class: Drupal\dmf_core\Resource\ModuleResourceService
@@ -47,6 +43,11 @@ services:
       - '@file_system'
       - '@file_url_generator'
       - '@file.mime_type.guesser'
+      - '@logger.factory'
+
+  # Crypto
+  dmf_core.crypto.hash_service:
+    class: Drupal\dmf_core\Crypto\HashService
 
   # API Endpoint Repository
   dmf_core.api_endpoint_repository:
@@ -84,7 +85,7 @@ services:
     arguments:
       - '@config.factory'
       - '@dmf_core.logger_factory'
-      - '@dmf_core.backend.uri_builder'
+      - '@dmf_core.crypto.hash_service'
       - '@dmf_core.resource.module'
       - '@dmf_core.file_storage'
       - '@dmf_core.api_endpoint_repository'
