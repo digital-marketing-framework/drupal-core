@@ -5,3 +5,10 @@ services:
       - '@dmf_core.registry_collection'
     tags:
       - { name: drush.command }
+
+  dmf_core.commands.migrate_configuration:
+    class: Drupal\dmf_core\Commands\MigrateConfigurationCommand
+    arguments:
+      - '@dmf_core.registry_collection'
+    tags:
+      - { name: drush.command }

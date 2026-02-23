@@ -16,9 +16,7 @@ class CleanupCommand extends DrushCommands
      * @param RegistryCollection $registryCollection
      *   The registry collection
      */
-    public function __construct(/**
-                                 * The registry collection.
-                                 */
+    public function __construct(
         protected RegistryCollection $registryCollection,
     ) {
         parent::__construct();
