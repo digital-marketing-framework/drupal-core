@@ -55,6 +55,12 @@ services:
     arguments:
       - '@entity_type.manager'
 
+  # Test Case Repository
+  dmf_core.test_case_repository:
+    class: Drupal\dmf_core\Entity\TestCaseRepository
+    arguments:
+      - '@entity_type.manager'
+
   # Backend Controller
   dmf_core.controller.backend:
     class: Drupal\dmf_core\Controller\BackendController
@@ -89,6 +95,7 @@ services:
       - '@dmf_core.resource.module'
       - '@dmf_core.file_storage'
       - '@dmf_core.api_endpoint_repository'
+      - '@dmf_core.test_case_repository'
       - '@entity.form_builder'
       - '@entity_type.manager'
       - '@renderer'

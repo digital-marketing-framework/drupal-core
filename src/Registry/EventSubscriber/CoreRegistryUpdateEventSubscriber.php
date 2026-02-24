@@ -11,6 +11,7 @@ use DigitalMarketingFramework\Core\FileStorage\FileStorageInterface;
 use DigitalMarketingFramework\Core\Log\LoggerFactoryInterface;
 use DigitalMarketingFramework\Core\Registry\RegistryInterface;
 use DigitalMarketingFramework\Core\Resource\ResourceServiceInterface;
+use DigitalMarketingFramework\Core\TestCase\TestCaseStorageInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityFormBuilderInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -31,6 +32,7 @@ class CoreRegistryUpdateEventSubscriber extends AbstractCoreRegistryUpdateEventS
         protected ResourceServiceInterface $moduleResourceService,
         protected FileStorageInterface $fileStorage,
         protected EndPointStorageInterface $endPointStorage,
+        protected TestCaseStorageInterface $testCaseStorage,
         protected EntityFormBuilderInterface $entityFormBuilder,
         protected EntityTypeManagerInterface $entityTypeManager,
         protected RendererInterface $renderer,
@@ -61,6 +63,9 @@ class CoreRegistryUpdateEventSubscriber extends AbstractCoreRegistryUpdateEventS
 
         // Set API Endpoint storage (Drupal implementation)
         $registry->setEndPointStorage($this->endPointStorage);
+
+        // Set Test Case storage (Drupal implementation)
+        $registry->setTestCaseStorage($this->testCaseStorage);
 
         // Set ConfigurationDocumentStorage (user-created documents)
         $registry->setConfigurationDocumentStorage(
