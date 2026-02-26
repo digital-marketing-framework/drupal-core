@@ -98,33 +98,3 @@ dmf_core.dmf_api_endpoint.*:
     configuration_document:
       type: text
       label: 'Configuration document'
-
-# Test Case entity schema
-dmf_core.dmf_test_case.*:
-  type: config_entity
-  label: 'Test Case'
-  mapping:
-    id:
-      type: string
-      label: 'ID'
-    label:
-      type: label
-      label: 'Label'
-    name:
-      type: string
-      label: 'Name'
-    description:
-      type: text
-      label: 'Description'
-    type:
-      type: string
-      label: 'Type'
-    hash:
-      type: string
-      label: 'Hash'
-    serialized_input:
-      type: text
-      label: 'Serialized input'
-    serialized_expected_output:
-      type: text
-      label: 'Serialized expected output'

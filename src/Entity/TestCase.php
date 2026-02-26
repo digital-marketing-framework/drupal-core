@@ -3,91 +3,100 @@
 namespace Drupal\dmf_core\Entity;
 
 use DigitalMarketingFramework\Core\Model\TestCase\TestCaseInterface;
-use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\Core\Entity\ContentEntityBase;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
 use JsonException;
 
 /**
  * Defines the Test Case entity.
  *
- * @ConfigEntityType(
+ * @ContentEntityType(
  *   id = "dmf_test_case",
  *   label = @Translation("Test Case"),
+ *   base_table = "dmf_test_case",
+ *   entity_keys = {
+ *     "id" = "id",
+ *     "uuid" = "uuid",
+ *     "label" = "label",
+ *   },
  *   handlers = {
- *     "list_builder" = "Drupal\Core\Config\Entity\ConfigEntityListBuilder",
+ *     "storage" = "Drupal\Core\Entity\Sql\SqlContentEntityStorage",
  *     "form" = {
  *       "add" = "Drupal\dmf_core\Form\TestCaseForm",
  *       "edit" = "Drupal\dmf_core\Form\TestCaseForm",
- *       "delete" = "Drupal\Core\Entity\EntityDeleteForm"
- *     },
- *     "route_provider" = {
- *       "html" = "Drupal\Core\Entity\Routing\AdminHtmlRouteProvider",
+ *       "delete" = "Drupal\Core\Entity\ContentEntityDeleteForm"
  *     },
  *   },
- *   config_prefix = "dmf_test_case",
  *   admin_permission = "administer site configuration",
- *   entity_keys = {
- *     "id" = "id",
- *     "label" = "label",
- *   },
- *   links = {
- *     "collection" = "/admin/dmf/test-cases",
- *     "add-form" = "/admin/dmf/test-case/add",
- *     "edit-form" = "/admin/dmf/test-case/{dmf_test_case}/edit",
- *     "delete-form" = "/admin/dmf/test-case/{dmf_test_case}/delete"
- *   },
- *   config_export = {
- *     "id",
- *     "label",
- *     "name",
- *     "description",
- *     "type",
- *     "hash",
- *     "serialized_input",
- *     "serialized_expected_output",
- *   }
  * )
  */
-class TestCase extends ConfigEntityBase implements TestCaseInterface
+class TestCase extends ContentEntityBase implements TestCaseInterface
 {
     /**
-     * The test case ID.
+     * {@inheritdoc}
      */
-    protected string $id;
+    public static function baseFieldDefinitions(EntityTypeInterface $entity_type): array
+    {
+        $fields = parent::baseFieldDefinitions($entity_type);
 
-    /**
-     * The test case label.
-     */
-    protected string $label = '';
+        $fields['label'] = BaseFieldDefinition::create('string')
+          ->setLabel(t('Label'))
+          ->setDescription(t('The human-readable label of the test case'))
+          ->setDefaultValue('')
+          ->setSettings([
+              'max_length' => 255,
+          ]);
 
-    /**
-     * The test case name.
-     */
-    protected string $name = '';
+        $fields['name'] = BaseFieldDefinition::create('string')
+          ->setLabel(t('Name'))
+          ->setDescription(t('The machine name of the test case'))
+          ->setDefaultValue('')
+          ->setSettings([
+              'max_length' => 255,
+          ]);
 
-    /**
-     * The test case description.
-     */
-    protected string $description = '';
+        $fields['description'] = BaseFieldDefinition::create('string_long')
+          ->setLabel(t('Description'))
+          ->setDescription(t('A description of the test case'))
+          ->setDefaultValue('');
 
-    /**
-     * The test processor type.
-     */
-    protected string $type = '';
+        $fields['type'] = BaseFieldDefinition::create('string')
+          ->setLabel(t('Type'))
+          ->setDescription(t('The test processor type'))
+          ->setDefaultValue('')
+          ->setSettings([
+              'max_length' => 255,
+          ]);
 
-    /**
-     * Hash for tracking changes.
-     */
-    protected string $hash = '';
+        $fields['hash'] = BaseFieldDefinition::create('string')
+          ->setLabel(t('Hash'))
+          ->setDescription(t('Hash for tracking changes'))
+          ->setDefaultValue('')
+          ->setSettings([
+              'max_length' => 255,
+          ]);
 
-    /**
-     * JSON-encoded input data.
-     */
-    protected string $serialized_input = '';
+        $fields['serialized_input'] = BaseFieldDefinition::create('string_long')
+          ->setLabel(t('Serialized Input'))
+          ->setDescription(t('JSON-encoded input data'))
+          ->setDefaultValue('');
 
-    /**
-     * JSON-encoded expected output data.
-     */
-    protected string $serialized_expected_output = '';
+        $fields['serialized_expected_output'] = BaseFieldDefinition::create('string_long')
+          ->setLabel(t('Serialized Expected Output'))
+          ->setDescription(t('JSON-encoded expected output data'))
+          ->setDefaultValue('');
+
+        $fields['created'] = BaseFieldDefinition::create('created')
+          ->setLabel(t('Created'))
+          ->setDescription(t('The time that the test case was created'));
+
+        $fields['changed'] = BaseFieldDefinition::create('changed')
+          ->setLabel(t('Changed'))
+          ->setDescription(t('The time that the test case was last changed'));
+
+        return $fields;
+    }
 
     /**
      * {@inheritdoc}
@@ -110,7 +119,9 @@ class TestCase extends ConfigEntityBase implements TestCaseInterface
      */
     public function getLabel(): string
     {
-        return $this->label() ?? $this->getName();
+        $label = $this->get('label')->getString();
+
+        return $label !== '' ? $label : $this->getName();
     }
 
     /**
@@ -118,7 +129,7 @@ class TestCase extends ConfigEntityBase implements TestCaseInterface
      */
     public function setLabel(string $label): void
     {
-        $this->label = $label;
+        $this->set('label', $label);
     }
 
     /**
@@ -126,7 +137,7 @@ class TestCase extends ConfigEntityBase implements TestCaseInterface
      */
     public function getName(): string
     {
-        return $this->name;
+        return $this->get('name')->getString();
     }
 
     /**
@@ -134,7 +145,7 @@ class TestCase extends ConfigEntityBase implements TestCaseInterface
      */
     public function setName(string $name): void
     {
-        $this->name = $name;
+        $this->set('name', $name);
     }
 
     /**
@@ -142,7 +153,7 @@ class TestCase extends ConfigEntityBase implements TestCaseInterface
      */
     public function getDescription(): string
     {
-        return $this->description;
+        return $this->get('description')->getString();
     }
 
     /**
@@ -150,7 +161,7 @@ class TestCase extends ConfigEntityBase implements TestCaseInterface
      */
     public function setDescription(string $description): void
     {
-        $this->description = $description;
+        $this->set('description', $description);
     }
 
     /**
@@ -158,7 +169,7 @@ class TestCase extends ConfigEntityBase implements TestCaseInterface
      */
     public function getType(): string
     {
-        return $this->type;
+        return $this->get('type')->getString();
     }
 
     /**
@@ -166,7 +177,7 @@ class TestCase extends ConfigEntityBase implements TestCaseInterface
      */
     public function setType(string $type): void
     {
-        $this->type = $type;
+        $this->set('type', $type);
     }
 
     /**
@@ -174,7 +185,7 @@ class TestCase extends ConfigEntityBase implements TestCaseInterface
      */
     public function getHash(): string
     {
-        return $this->hash;
+        return $this->get('hash')->getString();
     }
 
     /**
@@ -182,7 +193,7 @@ class TestCase extends ConfigEntityBase implements TestCaseInterface
      */
     public function setHash(string $hash): void
     {
-        $this->hash = $hash;
+        $this->set('hash', $hash);
     }
 
     /**
@@ -190,12 +201,13 @@ class TestCase extends ConfigEntityBase implements TestCaseInterface
      */
     public function getInput(): array
     {
-        if ($this->serialized_input === '') {
+        $data = $this->get('serialized_input')->getString();
+        if ($data === '') {
             return [];
         }
 
         try {
-            return json_decode($this->serialized_input, associative: true, flags: JSON_THROW_ON_ERROR);
+            return json_decode($data, associative: true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException) {
             return [];
         }
@@ -207,10 +219,10 @@ class TestCase extends ConfigEntityBase implements TestCaseInterface
     public function setInput(array $input): void
     {
         try {
-            $this->serialized_input = json_encode($input, flags: JSON_THROW_ON_ERROR);
+            $this->set('serialized_input', json_encode($input, flags: JSON_THROW_ON_ERROR));
         } catch (JsonException) {
             try {
-                $this->serialized_input = json_encode($input, flags: JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR);
+                $this->set('serialized_input', json_encode($input, flags: JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR));
             } catch (JsonException) {
             }
         }
@@ -221,12 +233,13 @@ class TestCase extends ConfigEntityBase implements TestCaseInterface
      */
     public function getExpectedOutput(): array
     {
-        if ($this->serialized_expected_output === '') {
+        $data = $this->get('serialized_expected_output')->getString();
+        if ($data === '') {
             return [];
         }
 
         try {
-            return json_decode($this->serialized_expected_output, associative: true, flags: JSON_THROW_ON_ERROR);
+            return json_decode($data, associative: true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException) {
             return [];
         }
@@ -238,10 +251,10 @@ class TestCase extends ConfigEntityBase implements TestCaseInterface
     public function setExpectedOutput(array $expectedOutput): void
     {
         try {
-            $this->serialized_expected_output = json_encode($expectedOutput, flags: JSON_THROW_ON_ERROR);
+            $this->set('serialized_expected_output', json_encode($expectedOutput, flags: JSON_THROW_ON_ERROR));
         } catch (JsonException) {
             try {
-                $this->serialized_expected_output = json_encode($expectedOutput, flags: JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR);
+                $this->set('serialized_expected_output', json_encode($expectedOutput, flags: JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR));
             } catch (JsonException) {
             }
         }

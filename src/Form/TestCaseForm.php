@@ -2,7 +2,7 @@
 
 namespace Drupal\dmf_core\Form;
 
-use Drupal\Core\Entity\EntityForm;
+use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\dmf_core\Entity\TestCase;
@@ -10,7 +10,7 @@ use Drupal\dmf_core\Entity\TestCase;
 /**
  * Form handler for Test Case add and edit forms.
  */
-class TestCaseForm extends EntityForm
+class TestCaseForm extends ContentEntityForm
 {
     /**
      * @param array<mixed> $form
@@ -46,16 +46,6 @@ class TestCaseForm extends EntityForm
             '#default_value' => $testCase->getLabel(),
             '#description' => $this->t('The human-readable label of the test case.'),
             '#required' => true,
-        ];
-
-        $form['general']['id'] = [
-            '#type' => 'machine_name',
-            '#default_value' => $testCase->id(),
-            '#machine_name' => [
-                'exists' => $this->exist(...),
-                'source' => ['general', 'label'],
-            ],
-            '#disabled' => !$testCase->isNew(),
         ];
 
         $form['general']['name'] = [
@@ -102,7 +92,7 @@ class TestCaseForm extends EntityForm
         $form['test']['serialized_input'] = [
             '#type' => 'textarea',
             '#title' => $this->t('Serialized Input'),
-            '#default_value' => $testCase->get('serialized_input') ?? '',
+            '#default_value' => $testCase->get('serialized_input')->getString(),
             '#description' => $this->t('JSON-encoded input data.'),
             '#rows' => 10,
         ];
@@ -110,7 +100,7 @@ class TestCaseForm extends EntityForm
         $form['test']['serialized_expected_output'] = [
             '#type' => 'textarea',
             '#title' => $this->t('Serialized Expected Output'),
-            '#default_value' => $testCase->get('serialized_expected_output') ?? '',
+            '#default_value' => $testCase->get('serialized_expected_output')->getString(),
             '#description' => $this->t('JSON-encoded expected output data.'),
             '#rows' => 10,
         ];
@@ -208,20 +198,5 @@ class TestCaseForm extends EntityForm
         $form_state->setRedirectUrl(Url::fromUserInput($returnUrl));
 
         return $status;
-    }
-
-    /**
-     * Helper function to check whether a test case configuration entity exists.
-     */
-    public function exist(string $id): bool
-    {
-        $entity = $this->entityTypeManager
-          ->getStorage('dmf_test_case')
-          ->getQuery()
-          ->condition('id', $id)
-          ->accessCheck(false)
-          ->execute();
-
-        return (bool)$entity;
     }
 }

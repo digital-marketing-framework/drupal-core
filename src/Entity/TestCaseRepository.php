@@ -57,8 +57,8 @@ class TestCaseRepository implements TestCaseStorageInterface
             description: $entity->getDescription(),
             type: $entity->getType(),
             hash: $entity->getHash(),
-            serializedInput: $entity->get('serialized_input') ?? '',
-            serializedExpectedOutput: $entity->get('serialized_expected_output') ?? '',
+            serializedInput: $entity->get('serialized_input')->getString(),
+            serializedExpectedOutput: $entity->get('serialized_expected_output')->getString(),
         );
         $testCase->setId($entity->id());
 
@@ -106,12 +106,6 @@ class TestCaseRepository implements TestCaseStorageInterface
     {
         $data ??= [];
 
-        // Generate unique ID if not provided.
-        if (!isset($data['id'])) {
-            $name = $data['name'] ?? 'test_case';
-            $data['id'] = $this->generateUniqueId($name);
-        }
-
         // Set label from name if not provided.
         if (!isset($data['label']) && isset($data['name'])) {
             $data['label'] = $data['name'];
@@ -139,8 +133,7 @@ class TestCaseRepository implements TestCaseStorageInterface
         }
 
         if (!isset($entity)) {
-            $data = ['id' => $this->generateUniqueId($item->getName())];
-            $entity = $this->storage->create($data);
+            $entity = $this->storage->create();
         }
 
         /** @var TestCase $entity */
@@ -389,35 +382,5 @@ class TestCaseRepository implements TestCaseStorageInterface
                 $query->sort($field, $direction);
             }
         }
-    }
-
-    /**
-     * Generate a unique machine name ID from a human-readable name.
-     *
-     * @param string $name
-     *   The human-readable name
-     *
-     * @return string
-     *   A unique machine name ID
-     */
-    protected function generateUniqueId(string $name): string
-    {
-        // Convert to lowercase and replace non-alphanumeric chars with underscore.
-        $id = strtolower((string)preg_replace('/[^a-zA-Z0-9]+/', '_', $name));
-        $id = trim($id, '_');
-
-        // Ensure we have something.
-        if ($id === '') {
-            $id = 'test_case';
-        }
-
-        // Check for uniqueness and append counter if needed.
-        $baseId = $id;
-        $counter = 1;
-        while ($this->storage->load($id)) {
-            $id = $baseId . '_' . $counter++;
-        }
-
-        return $id;
     }
 }
