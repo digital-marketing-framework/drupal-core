@@ -1,0 +1,4 @@
+anyrel:
+  label: 'Anyrel'
+  description: 'Field types provided by the Anyrel framework.'
+  weight: 50

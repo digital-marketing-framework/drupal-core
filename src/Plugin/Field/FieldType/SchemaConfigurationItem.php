@@ -22,7 +22,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
     id: 'dmf_schema_configuration',
     label: new TranslatableMarkup('Anyrel Schema Configuration'),
     description: new TranslatableMarkup('Stores an Anyrel configuration with schema-based editor support.'),
-    category: new TranslatableMarkup('Anyrel'),
+    category: 'anyrel',
     default_widget: 'dmf_schema_configuration_editor',
     default_formatter: 'dmf_schema_configuration_hidden'
 )]
