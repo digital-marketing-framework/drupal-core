@@ -23,6 +23,14 @@ dataPrivacy:
 notifications:
   enabled: false
 
+defaultTimezone: 'server'
+
+frontend:
+  prefix: 'dmf'
+  hiddenClass: ''
+  disabledClass: 'disabled'
+  loadingClass: 'loading'
+
 cleanup:
   cronEnabled: false
   cronMinInterval: 3600

@@ -55,6 +55,25 @@ dmf_core.global_settings:
         enabled:
           type: boolean
           label: 'Enable notifications'
+    defaultTimezone:
+      type: string
+      label: 'Default Timezone'
+    frontend:
+      type: mapping
+      label: 'Frontend'
+      mapping:
+        prefix:
+          type: string
+          label: 'Data Attribute Prefix'
+        hiddenClass:
+          type: string
+          label: 'Hidden CSS Class'
+        disabledClass:
+          type: string
+          label: 'Disabled CSS Class'
+        loadingClass:
+          type: string
+          label: 'Loading CSS Class'
     cleanup:
       type: mapping
       label: 'Cleanup'
