@@ -74,6 +74,18 @@ dmf_core.global_settings:
         loadingClass:
           type: string
           label: 'Loading CSS Class'
+        frameAllowedOrigins:
+          type: string
+          label: 'Frame Communication: Allowed Origins'
+        frameTimeout:
+          type: integer
+          label: 'Frame Communication: Request Timeout (ms)'
+        frameAutoResizeParam:
+          type: string
+          label: 'Frame Communication: Auto-Resize URL Parameter'
+        frameMeasuringClass:
+          type: string
+          label: 'Frame Communication: Measuring CSS Class'
     cleanup:
       type: mapping
       label: 'Cleanup'

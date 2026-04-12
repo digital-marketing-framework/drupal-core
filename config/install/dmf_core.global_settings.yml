@@ -30,6 +30,10 @@ frontend:
   hiddenClass: ''
   disabledClass: 'disabled'
   loadingClass: 'loading'
+  frameAllowedOrigins: ''
+  frameTimeout: 0
+  frameAutoResizeParam: 'dmfAutoResize'
+  frameMeasuringClass: ''
 
 cleanup:
   cronEnabled: false
