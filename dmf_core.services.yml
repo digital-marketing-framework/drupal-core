@@ -86,8 +86,8 @@ services:
       - { name: event_subscriber }
     public: true
 
-  dmf_core.event_subscriber.core_registry_update:
-    class: Drupal\dmf_core\Registry\EventSubscriber\CoreRegistryUpdateEventSubscriber
+  dmf_core.initialization:
+    class: Drupal\dmf_core\DrupalCoreInitialization
     arguments:
       - '@config.factory'
       - '@dmf_core.logger_factory'
@@ -99,6 +99,11 @@ services:
       - '@entity.form_builder'
       - '@entity_type.manager'
       - '@renderer'
+
+  dmf_core.event_subscriber.core_registry_update:
+    class: Drupal\dmf_core\Registry\EventSubscriber\CoreRegistryUpdateEventSubscriber
+    arguments:
+      - '@dmf_core.initialization'
     tags:
       - { name: event_subscriber }
     public: true
