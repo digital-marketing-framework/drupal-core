@@ -157,6 +157,13 @@ class ApiEndpointForm extends EntityForm
             '#description' => $this->t('Allow context to be overridden.'),
         ];
 
+        $form['push']['http_redirect'] = [
+            '#type' => 'checkbox',
+            '#title' => $this->t('Respond with HTTP Redirect (303)'),
+            '#default_value' => $endpoint->getHttpRedirect(),
+            '#description' => $this->t('When a redirect is staged, return an HTTP 303 redirect response instead of including the redirect URL in the JSON body. Use for browser form-post consumers (Pardot/Web-to-Lead style); leave off for AJAX clients.'),
+        ];
+
         // Pull tab
         $form['pull'] = [
             '#type' => 'details',

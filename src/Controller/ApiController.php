@@ -4,12 +4,14 @@ namespace Drupal\dmf_core\Controller;
 
 use DigitalMarketingFramework\Core\Api\RouteResolver\EntryRouteResolverInterface;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\dmf_core\Registry\RegistryCollection;
 use Exception;
 use JsonException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Controller for handling Anyrel API requests.
@@ -59,10 +61,11 @@ class ApiController extends ControllerBase
      * @param Request $request
      *   The current request object
      *
-     * @return JsonResponse
-     *   JSON response with API data
+     * @return Response
+     *   JSON response with API data, or a redirect response when the API
+     *   response carries a redirect URL
      */
-    public function handle(string $version, string $api_route, Request $request): JsonResponse
+    public function handle(string $version, string $api_route, Request $request): Response
     {
         try {
             // Combine version and route path for Anyrel
@@ -78,15 +81,28 @@ class ApiController extends ControllerBase
             // Extract query parameters.
             $query = $request->query->all();
 
-            // Parse JSON body (if present)
+            // Parse body based on Content-Type.
             $body = null;
-            $content = $request->getContent();
-            if ($content !== '') {
-                try {
-                    $body = json_decode($content, true, flags: JSON_THROW_ON_ERROR);
-                } catch (JsonException) {
-                    // Invalid JSON - leave as null.
-                    $body = null;
+            $contentType = (string)$request->headers->get('Content-Type', '');
+            if ($contentType !== '' && (str_contains($contentType, 'application/x-www-form-urlencoded') || str_contains($contentType, 'multipart/form-data'))) {
+                // Form-encoded body: treat parsed fields as the payload (no
+                // wrapper). Context cannot be supplied this way; form clients
+                // (Pardot/Web-to-Lead style) carry context naturally via
+                // cookies and headers.
+                $parsed = $request->request->all();
+                if ($parsed !== []) {
+                    $body = ['payload' => $parsed];
+                }
+            } else {
+                // JSON body (default): {payload: ..., context: ...}
+                $content = $request->getContent();
+                if ($content !== '') {
+                    try {
+                        $body = json_decode($content, true, flags: JSON_THROW_ON_ERROR);
+                    } catch (JsonException) {
+                        // Invalid JSON - leave as null.
+                        $body = null;
+                    }
                 }
             }
 
@@ -95,6 +111,14 @@ class ApiController extends ControllerBase
 
             // Resolve request through Anyrel.
             $apiResponse = $routeResolver->resolveRequest($apiRequest);
+
+            $redirectUrl = $apiResponse->getRedirectUrl();
+            if ($redirectUrl !== null && $redirectUrl !== '') {
+                $redirect = new TrustedRedirectResponse($redirectUrl, $apiResponse->getStatusCode());
+                $redirect->headers->set('Cache-Control', 'no-store, must-revalidate');
+
+                return $redirect;
+            }
 
             // Convert Anyrel's ApiResponse to Symfony JsonResponse.
             $responseData = json_decode($apiResponse->getContent(), true);

@@ -43,6 +43,7 @@ use Drupal\Core\Config\Entity\ConfigEntityBase;
  *     "disable_context",
  *     "allow_context_override",
  *     "expose_to_frontend",
+ *     "http_redirect",
  *     "configuration_document",
  *   }
  * )
@@ -88,6 +89,11 @@ class ApiEndpoint extends ConfigEntityBase implements EndPointInterface
      * Expose to frontend flag.
      */
     protected bool $expose_to_frontend = false;
+
+    /**
+     * Respond with HTTP redirect (303) when a redirect is staged.
+     */
+    protected bool $http_redirect = false;
 
     /**
      * Configuration document (YAML).
@@ -228,6 +234,22 @@ class ApiEndpoint extends ConfigEntityBase implements EndPointInterface
     public function setExposeToFrontend(bool $exposeToFrontend): void
     {
         $this->expose_to_frontend = $exposeToFrontend;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getHttpRedirect(): bool
+    {
+        return $this->http_redirect;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setHttpRedirect(bool $httpRedirect): void
+    {
+        $this->http_redirect = $httpRedirect;
     }
 
     /**

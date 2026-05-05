@@ -126,6 +126,9 @@ dmf_core.dmf_api_endpoint.*:
     expose_to_frontend:
       type: boolean
       label: 'Expose to frontend'
+    http_redirect:
+      type: boolean
+      label: 'Respond with HTTP redirect (303)'
     configuration_document:
       type: text
       label: 'Configuration document'
