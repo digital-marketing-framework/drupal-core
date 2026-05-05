@@ -23,6 +23,7 @@ use Drupal\Core\Site\Settings;
 use Drupal\dmf_core\Backend\AssetUriBuilder;
 use Drupal\dmf_core\Backend\Controller\SectionController\ApiEditSectionController;
 use Drupal\dmf_core\Backend\UriRouteResolver\DrupalDefaultUriRouteResolver;
+use Drupal\dmf_core\Frontend\DrupalFrontendUriBuilder;
 use Drupal\dmf_core\GlobalConfiguration\GlobalConfiguration;
 use Drupal\dmf_core\GlobalConfiguration\Schema\CoreGlobalConfigurationSchema;
 
@@ -101,6 +102,8 @@ class DrupalCoreInitialization extends DrupalInitialization
         ]);
 
         $registry->setBackendAssetUriBuilder(new AssetUriBuilder($registry));
+
+        $registry->setFrontendUriBuilder(new DrupalFrontendUriBuilder());
 
         parent::initServices($domain, $registry);
     }
