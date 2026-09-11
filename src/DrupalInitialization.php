@@ -48,6 +48,11 @@ class DrupalInitialization extends Initialization implements DrupalInitializatio
     protected const CONFIGURATION_DOCUMENT_FOLDERS = ['configuration'];
 
     /**
+     * @var array<string>
+     */
+    protected const FIELD_DEFINITION_FOLDERS = ['fields'];
+
+    /**
      * @var array<string,int>
      */
     protected const TEMPLATE_FOLDERS = ['templates/frontend' => 200];

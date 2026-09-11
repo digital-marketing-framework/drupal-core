@@ -21,23 +21,31 @@ use Drupal\Core\Entity\Query\QueryInterface;
  */
 class TestCaseRepository implements TestCaseStorageInterface
 {
-    /**
-     * Drupal's entity storage for dmf_test_case entities.
-     */
-    protected EntityStorageInterface $storage;
+    public const ENTITY_TYPE_ID = 'dmf_test_case';
 
     /**
      * Constructor.
      *
      * @param EntityTypeManagerInterface $entityTypeManager
      *   The entity type manager
+     */
+    public function __construct(
+        protected EntityTypeManagerInterface $entityTypeManager,
+    ) {
+    }
+
+    /**
+     * Drupal's entity storage for dmf_test_case entities.
+     *
+     * Fetched per call rather than held: the entity type manager caches its handlers itself, so
+     * this costs a lookup, and it can invalidate them — a stored reference would outlive them.
      *
      * @throws InvalidPluginDefinitionException
      * @throws PluginNotFoundException
      */
-    public function __construct(EntityTypeManagerInterface $entityTypeManager)
+    protected function getStorage(): EntityStorageInterface
     {
-        $this->storage = $entityTypeManager->getStorage('dmf_test_case');
+        return $this->entityTypeManager->getStorage(static::ENTITY_TYPE_ID);
     }
 
     /**
@@ -112,7 +120,7 @@ class TestCaseRepository implements TestCaseStorageInterface
         }
 
         /** @var TestCase */
-        return $this->storage->create($data);
+        return $this->getStorage()->create($data);
     }
 
     /**
@@ -129,11 +137,11 @@ class TestCaseRepository implements TestCaseStorageInterface
         // Core TestCase model - create entity and copy data.
         $id = $item->getId();
         if ($id !== null) {
-            $entity = $this->storage->load($id);
+            $entity = $this->getStorage()->load($id);
         }
 
         if (!isset($entity)) {
-            $entity = $this->storage->create();
+            $entity = $this->getStorage()->create();
         }
 
         /** @var TestCase $entity */
@@ -158,7 +166,7 @@ class TestCaseRepository implements TestCaseStorageInterface
 
         $id = $item->getId();
         if ($id !== null) {
-            $entity = $this->storage->load($id);
+            $entity = $this->getStorage()->load($id);
             if ($entity !== null) {
                 $entity->delete();
             }
@@ -184,7 +192,7 @@ class TestCaseRepository implements TestCaseStorageInterface
             return;
         }
 
-        $entity = $this->storage->load($id);
+        $entity = $this->getStorage()->load($id);
         if ($entity === null) {
             $this->add($item);
 
@@ -201,7 +209,7 @@ class TestCaseRepository implements TestCaseStorageInterface
      */
     public function fetchById(int|string $id)
     {
-        $entity = $this->storage->load($id);
+        $entity = $this->getStorage()->load($id);
 
         return $entity instanceof TestCase ? $this->entityToTestCase($entity) : null;
     }
@@ -211,7 +219,7 @@ class TestCaseRepository implements TestCaseStorageInterface
      */
     public function countAll(): int
     {
-        $query = $this->storage->getQuery();
+        $query = $this->getStorage()->getQuery();
         $query->accessCheck(false);
 
         return $query->count()->execute();
@@ -222,7 +230,7 @@ class TestCaseRepository implements TestCaseStorageInterface
      */
     public function fetchAll(?array $navigation = null): array
     {
-        $query = $this->storage->getQuery();
+        $query = $this->getStorage()->getQuery();
         $query->accessCheck(false);
 
         $this->applyNavigation($query, $navigation);
@@ -232,7 +240,7 @@ class TestCaseRepository implements TestCaseStorageInterface
             return [];
         }
 
-        return $this->entitiesToTestCases($this->storage->loadMultiple($ids));
+        return $this->entitiesToTestCases($this->getStorage()->loadMultiple($ids));
     }
 
     /**
@@ -240,7 +248,7 @@ class TestCaseRepository implements TestCaseStorageInterface
      */
     public function countFiltered(array $filters): int
     {
-        $query = $this->storage->getQuery();
+        $query = $this->getStorage()->getQuery();
         $query->accessCheck(false);
 
         $this->applyFilters($query, $filters);
@@ -253,7 +261,7 @@ class TestCaseRepository implements TestCaseStorageInterface
      */
     public function fetchFiltered(array $filters, ?array $navigation = null): array
     {
-        $query = $this->storage->getQuery();
+        $query = $this->getStorage()->getQuery();
         $query->accessCheck(false);
 
         $this->applyFilters($query, $filters);
@@ -264,7 +272,7 @@ class TestCaseRepository implements TestCaseStorageInterface
             return [];
         }
 
-        return $this->entitiesToTestCases($this->storage->loadMultiple($ids));
+        return $this->entitiesToTestCases($this->getStorage()->loadMultiple($ids));
     }
 
     /**
@@ -285,7 +293,7 @@ class TestCaseRepository implements TestCaseStorageInterface
      */
     public function fetchByIdList(array $ids): array
     {
-        return $this->entitiesToTestCases($this->storage->loadMultiple($ids));
+        return $this->entitiesToTestCases($this->getStorage()->loadMultiple($ids));
     }
 
     /**
@@ -309,7 +317,7 @@ class TestCaseRepository implements TestCaseStorageInterface
      */
     public function fetchAllTypes(): array
     {
-        $query = $this->storage->getQuery();
+        $query = $this->getStorage()->getQuery();
         $query->accessCheck(false);
 
         $ids = $query->execute();
@@ -319,7 +327,7 @@ class TestCaseRepository implements TestCaseStorageInterface
 
         $types = [];
         /** @var TestCase $entity */
-        foreach ($this->storage->loadMultiple($ids) as $entity) {
+        foreach ($this->getStorage()->loadMultiple($ids) as $entity) {
             $type = $entity->getType();
             if ($type !== '' && !in_array($type, $types, true)) {
                 $types[] = $type;
