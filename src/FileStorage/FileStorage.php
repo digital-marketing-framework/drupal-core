@@ -126,6 +126,13 @@ class FileStorage implements FileStorageInterface
             return;
         }
 
+        // A folder that takes no new file cannot be protected from here. Saying so through a
+        // PHP warning on every attempt is not saying it to anyone who can act on it; the
+        // storage answers isStorageReady() with false, which is what reaches the backend.
+        if (!$this->folderIsWriteable($path)) {
+            return;
+        }
+
         file_put_contents($accessFilePath, static::ACCESS_FILE_CONTENTS);
     }
 
@@ -137,11 +144,12 @@ class FileStorage implements FileStorageInterface
             throw new DigitalMarketingFrameworkException(sprintf('Stream wrapper not available for path %s', $fileIdentifier), 1732020011);
         }
 
-        // Ensure parent directory exists using Drupal's dirname
+        // Writing a file implies the folder it goes in: nobody should have to create the
+        // storage folder by hand before the first document can be saved. createFolder() makes
+        // only what is missing and protects the folder either way, which is how a folder that
+        // was there all along gets its access file.
         $directory = $this->fileSystem->dirname($path);
-        if (!$this->folderExists($directory)) {
-            $this->createFolder($directory);
-        }
+        $this->createFolder($directory);
 
         // Write file
         $result = file_put_contents($path, $fileContent);
