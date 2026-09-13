@@ -31,6 +31,16 @@ dmf_core.global_settings:
         allowSaveToExtensionPaths:
           type: boolean
           label: 'Allow save to extension paths'
+    fieldDefinitionStorage:
+      type: mapping
+      label: 'Field Definition Storage'
+      mapping:
+        folder:
+          type: string
+          label: 'Folder'
+        additionalFolders:
+          type: string
+          label: 'Additional field definition folders (comma-separated)'
     api:
       type: mapping
       label: 'API'

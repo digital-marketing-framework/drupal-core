@@ -3,9 +3,11 @@
 namespace Drupal\dmf_core\FileStorage;
 
 use DigitalMarketingFramework\Core\Exception\DigitalMarketingFrameworkException;
+use DigitalMarketingFramework\Core\FileStorage\AccessProtectionTrait;
 use DigitalMarketingFramework\Core\FileStorage\FileStorageInterface;
 use DigitalMarketingFramework\Core\Model\Data\Value\FileValue;
 use DigitalMarketingFramework\Core\Model\Data\Value\FileValueInterface;
+use DigitalMarketingFramework\Core\Utility\WebServerUtility;
 use Drupal\Core\File\Exception\DirectoryNotReadyException;
 use Drupal\Core\File\Exception\FileException;
 use Drupal\Core\File\Exception\InvalidStreamWrapperException;
@@ -29,6 +31,8 @@ use ValueError;
  */
 class FileStorage implements FileStorageInterface
 {
+    use AccessProtectionTrait;
+
     protected LoggerInterface $logger;
 
     public function __construct(
@@ -85,6 +89,53 @@ class FileStorage implements FileStorageInterface
         return $contents;
     }
 
+    public function folderIsWriteable(string $folderIdentifier): bool
+    {
+        $path = $this->normalizePath($folderIdentifier);
+        if (!$this->isStreamWrapperAvailable($path)) {
+            return false;
+        }
+
+        if ($this->folderExists($path)) {
+            return is_writable($path);
+        }
+
+        // Asking must not create anything, so a missing folder is answered by the nearest
+        // ancestor that does exist.
+        $parent = $this->fileSystem->dirname($path);
+
+        return $parent !== $path && $this->folderIsWriteable($parent);
+    }
+
+    public function isPubliclyAccessible(string $identifier): bool
+    {
+        // Drupal answers this by scheme: private:// is served through its own access checks,
+        // public:// sits under the docroot. Anything else is a plain path we know nothing about.
+        return parse_url($identifier, PHP_URL_SCHEME) !== 'private';
+    }
+
+    public function protectFolder(string $folderIdentifier): void
+    {
+        $path = $this->normalizePath($folderIdentifier);
+        if (!WebServerUtility::supportsAccessFile() || !$this->isPubliclyAccessible($path) || !$this->folderExists($path)) {
+            return;
+        }
+
+        $accessFilePath = $path . '/' . static::ACCESS_FILE_NAME;
+        if ($this->fileExists($accessFilePath)) {
+            return;
+        }
+
+        // A folder that takes no new file cannot be protected from here. Saying so through a
+        // PHP warning on every attempt is not saying it to anyone who can act on it; the
+        // storage answers isStorageReady() with false, which is what reaches the backend.
+        if (!$this->folderIsWriteable($path)) {
+            return;
+        }
+
+        file_put_contents($accessFilePath, static::ACCESS_FILE_CONTENTS);
+    }
+
     public function putFileContents(string $fileIdentifier, string $fileContent): void
     {
         $path = $this->normalizePath($fileIdentifier);
@@ -93,11 +144,12 @@ class FileStorage implements FileStorageInterface
             throw new DigitalMarketingFrameworkException(sprintf('Stream wrapper not available for path %s', $fileIdentifier), 1732020011);
         }
 
-        // Ensure parent directory exists using Drupal's dirname
+        // Writing a file implies the folder it goes in: nobody should have to create the
+        // storage folder by hand before the first document can be saved. createFolder() makes
+        // only what is missing and protects the folder either way, which is how a folder that
+        // was there all along gets its access file.
         $directory = $this->fileSystem->dirname($path);
-        if (!$this->folderExists($directory)) {
-            $this->createFolder($directory);
-        }
+        $this->createFolder($directory);
 
         // Write file
         $result = file_put_contents($path, $fileContent);
@@ -241,6 +293,8 @@ class FileStorage implements FileStorageInterface
                 throw new DigitalMarketingFrameworkException(sprintf('Error creating folder %s: %s', $folderIdentifier, $e->getMessage()), 1732020003, $e);
             }
         }
+
+        $this->protectFolder($folderIdentifier);
     }
 
     public function copyFileToFolder(string $fileIdentifier, string $folderIdentifier): string

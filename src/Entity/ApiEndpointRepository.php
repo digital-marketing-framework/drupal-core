@@ -20,25 +20,31 @@ use Drupal\Core\Entity\Query\QueryInterface;
  */
 class ApiEndpointRepository implements EndPointStorageInterface
 {
-    /**
-     * Drupal's entity storage for dmf_api_endpoint entities.
-     *
-     * @var EntityStorageInterface
-     */
-    protected $storage;
+    public const ENTITY_TYPE_ID = 'dmf_api_endpoint';
 
     /**
      * Constructor.
      *
      * @param EntityTypeManagerInterface $entityTypeManager
      *   The entity type manager
+     */
+    public function __construct(
+        protected EntityTypeManagerInterface $entityTypeManager,
+    ) {
+    }
+
+    /**
+     * Drupal's entity storage for dmf_api_endpoint entities.
+     *
+     * Fetched per call rather than held: the entity type manager caches its handlers itself, so
+     * this costs a lookup, and it can invalidate them — a stored reference would outlive them.
      *
      * @throws InvalidPluginDefinitionException
      * @throws PluginNotFoundException
      */
-    public function __construct(EntityTypeManagerInterface $entityTypeManager)
+    protected function getStorage(): EntityStorageInterface
     {
-        $this->storage = $entityTypeManager->getStorage('dmf_api_endpoint');
+        return $this->entityTypeManager->getStorage(static::ENTITY_TYPE_ID);
     }
 
     /**
@@ -59,7 +65,7 @@ class ApiEndpointRepository implements EndPointStorageInterface
             $data['label'] = $data['name'];
         }
 
-        $endpoint = $this->storage->create($data);
+        $endpoint = $this->getStorage()->create($data);
         assert($endpoint instanceof EndPointInterface);
 
         return $endpoint;
@@ -97,7 +103,7 @@ class ApiEndpointRepository implements EndPointStorageInterface
      */
     public function fetchById(int|string $id)
     {
-        $entity = $this->storage->load($id);
+        $entity = $this->getStorage()->load($id);
         assert($entity === null || $entity instanceof EndPointInterface);
 
         return $entity;
@@ -108,7 +114,7 @@ class ApiEndpointRepository implements EndPointStorageInterface
      */
     public function countAll(): int
     {
-        $query = $this->storage->getQuery();
+        $query = $this->getStorage()->getQuery();
         $query->accessCheck(false);
 
         return $query->count()->execute();
@@ -119,7 +125,7 @@ class ApiEndpointRepository implements EndPointStorageInterface
      */
     public function fetchAll(?array $navigation = null): array
     {
-        $query = $this->storage->getQuery();
+        $query = $this->getStorage()->getQuery();
         $query->accessCheck(false);
 
         $this->applyNavigation($query, $navigation);
@@ -137,7 +143,7 @@ class ApiEndpointRepository implements EndPointStorageInterface
      */
     public function countFiltered(array $filters): int
     {
-        $query = $this->storage->getQuery();
+        $query = $this->getStorage()->getQuery();
         $query->accessCheck(false);
 
         $this->applyFilters($query, $filters);
@@ -150,7 +156,7 @@ class ApiEndpointRepository implements EndPointStorageInterface
      */
     public function fetchFiltered(array $filters, ?array $navigation = null): array
     {
-        $query = $this->storage->getQuery();
+        $query = $this->getStorage()->getQuery();
         $query->accessCheck(false);
 
         $this->applyFilters($query, $filters);
@@ -169,7 +175,7 @@ class ApiEndpointRepository implements EndPointStorageInterface
      */
     public function fetchOneFiltered(array $filters, ?array $navigation = null)
     {
-        $query = $this->storage->getQuery();
+        $query = $this->getStorage()->getQuery();
         $query->accessCheck(false);
         $query->range(0, 1);
 
@@ -181,7 +187,7 @@ class ApiEndpointRepository implements EndPointStorageInterface
             return null;
         }
 
-        $entity = $this->storage->load(reset($ids));
+        $entity = $this->getStorage()->load(reset($ids));
         assert($entity === null || $entity instanceof EndPointInterface);
 
         return $entity;
@@ -222,7 +228,7 @@ class ApiEndpointRepository implements EndPointStorageInterface
     protected function loadMultipleEndPoints(array $ids): array
     {
         $endPoints = [];
-        foreach ($this->storage->loadMultiple($ids) as $key => $entity) {
+        foreach ($this->getStorage()->loadMultiple($ids) as $key => $entity) {
             assert($entity instanceof EndPointInterface);
             $endPoints[$key] = $entity;
         }
@@ -300,7 +306,7 @@ class ApiEndpointRepository implements EndPointStorageInterface
         // Check for uniqueness and append counter if needed
         $baseId = $id;
         $counter = 1;
-        while ($this->storage->load($id)) {
+        while ($this->getStorage()->load($id)) {
             $id = $baseId . '_' . $counter++;
         }
 

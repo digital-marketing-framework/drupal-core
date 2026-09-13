@@ -13,6 +13,10 @@ configurationStorage:
   additionalDocumentFolders: ''
   allowSaveToExtensionPaths: false
 
+fieldDefinitionStorage:
+  folder: 'private://anyrel/fields/'
+  additionalFolders: ''
+
 api:
   enabled: false
   basePath: 'digital-marketing-framework/api'
