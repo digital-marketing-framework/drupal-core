@@ -68,6 +68,13 @@ dmf_core.global_settings:
     defaultTimezone:
       type: string
       label: 'Default Timezone'
+    backend:
+      type: mapping
+      label: 'Backend'
+      mapping:
+        colorScheme:
+          type: string
+          label: 'Color Scheme'
     frontend:
       type: mapping
       label: 'Frontend'
