@@ -29,6 +29,8 @@ notifications:
 
 defaultTimezone: 'server'
 
+allowedEnvironmentVariables: ''
+
 backend:
   colorScheme: 'auto'
 

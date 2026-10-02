@@ -68,6 +68,9 @@ dmf_core.global_settings:
     defaultTimezone:
       type: string
       label: 'Default Timezone'
+    allowedEnvironmentVariables:
+      type: string
+      label: 'Environment variables available in configuration documents (comma-separated)'
     backend:
       type: mapping
       label: 'Backend'
